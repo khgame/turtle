@@ -7,18 +7,16 @@ export interface IDriver<TConf, TService> {
 }
 
 interface IDriverMetadata {
-    type: "default";
-    target: object;
+    target: Function;
     name?: string;
 }
 
-const drivers: IDriverMetadata[] = [];
+const driverMetas: IDriverMetadata[] = [];
 
 export function Driver(name?: string): Function {
-    return function (object: Function) {
-        drivers.push({
-            type: "default",
-            target: object,
+    return function (target: Function) {
+        driverMetas.push({
+            target,
             name
         });
     };
@@ -26,37 +24,40 @@ export function Driver(name?: string): Function {
 
 const driverFactory = new SingletonFactory();
 
+function pickDrivers(constructors: Function[]) : IDriverMetadata[]{
+    return driverMetas.filter(dm => constructors.indexOf(dm.target) > -1);
+}
+
 async function initDriver<TConf, TService>(conf: TConf, driver: IDriverMetadata) {
     const instance = driverFactory.get(driver.target as IClass<IDriver<TConf, TService>>);
     return await instance.init(conf);
 }
 
-export async function InitDrivers(config: any, classes: Function[] | string[], cb?: (e: EventEmitter) => void) {
+export async function InitDrivers(config: any, constructors: Function[], cb?: (e: EventEmitter) => void) {
     const ev = new EventEmitter();
     if (cb) {
         cb(ev);
     }
-    let driverClasses: Function[];
-    if (classes && classes.length) {
-        driverClasses = (classes as any[]).filter(controller => controller instanceof Function);
-        const controllerDirs = (classes as any[]).filter(controller => typeof controller === "string");
-        driverClasses.push(...importClasses(controllerDirs));
-    }
 
+    const drivers = pickDrivers(constructors);
     let results: any = {};
-
-    for (const i in driverClasses) {
-        const driver = drivers.find(d => d.target === driverClasses[i]);
-        if (!driver) {
-            continue;
-        }
+    for (const i in drivers) {
+        const driver = drivers[i];
         const key = driver.name;
+        if (!config[key]) {
+            console.log(`config of driver ${key} are not exist`);
+        }
         const value = await initDriver(config[key], driver);
         ev.emit(key, value);
         results[key] = value;
     }
     console.log("drivers loaded", Object.keys(results));
-
+    // console.log("drivers loaded", results);
     return results;
+}
+
+export async function InitDriversFromDirs(config: any, dirs: string[], cb?: (e: EventEmitter) => void) {
+    const constructors: Function[] = importClasses(dirs);
+    return InitDrivers(config, constructors, cb);
 }
 
