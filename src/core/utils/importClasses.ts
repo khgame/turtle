@@ -1,34 +1,28 @@
-import * as path from "path";
+import * as Path from "path";
+import * as glob from "glob";
 
-/**
- * Loads all exported classes from the given directory.
- * Excerpt from https://github.com/typestack/routing-controllers/
- */
+function loadFunctionsInFile (exported: any, allLoaded: Function[] = []) {
+    if (exported instanceof Function) {
+        allLoaded.push(exported);
+    } else if (exported instanceof Array) {
+        exported.forEach((e: any) => loadFunctionsInFile(e, allLoaded));
+    } else if (exported instanceof Object || typeof exported === "object") {
+        Object.keys(exported).forEach(key => loadFunctionsInFile(exported[key], allLoaded));
+    }
+    return allLoaded;
+};
+
 export function importClasses(directories: string[], formats = [".js", ".ts"]): Function[] {
+    const allFiles = directories.reduce(
+        (allDirs: string[], dir) => {
+        return allDirs.concat(glob.sync(Path.resolve(dir, "*")));
+    }, [] as string[]).filter(file => {
+        const dtsExtension = file.substring(file.length - 5, file.length);
+        return formats.indexOf(Path.extname(file)) !== -1 && dtsExtension !== ".d.ts";
+    });
 
-    const loadFileClasses = function (exported: any, allLoaded: Function[]) {
-        if (exported instanceof Function) {
-            allLoaded.push(exported);
-        } else if (exported instanceof Array) {
-            exported.forEach((i: any) => loadFileClasses(i, allLoaded));
-        } else if (exported instanceof Object || typeof exported === "object") {
-            Object.keys(exported).forEach(key => loadFileClasses(exported[key], allLoaded));
-        }
-        return allLoaded;
-    };
-
-    const allFiles = directories.reduce((allDirs, dir) => {
-        return allDirs.concat(require("glob").sync(path.normalize(dir)));
-    }, [] as string[]);
-
-    const dirs = allFiles
-        .filter(file => {
-            const dtsExtension = file.substring(file.length - 5, file.length);
-            return formats.indexOf(path.extname(file)) !== -1 && dtsExtension !== ".d.ts";
-        })
-        .map(file => {
-            return require(file);
-        });
-
-    return loadFileClasses(dirs, []);
+    const exports = allFiles
+        .map(file => require(file));
+    const functions = loadFunctionsInFile(exports);
+    return functions;
 }
