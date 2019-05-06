@@ -38,9 +38,9 @@ export async function InitDrivers(config: any, classOrDirs: Array<string | Funct
     const constructors: Function[] = [];
     classOrDirs.forEach(cod => {
         if (typeof cod === "string") {
-            if (!Path.isAbsolute(cod)){
+            if (!Path.isAbsolute(cod)) {
                 constructors.push(...importFunctions(Path.resolve(__dirname, "../driver", cod)));
-            }else {
+            } else {
                 constructors.push(...importClasses([cod]));
             }
         } else {
@@ -53,6 +53,10 @@ export async function InitDrivers(config: any, classOrDirs: Array<string | Funct
 }
 
 export async function InitDriversFromCostructors(config: any, constructors: Function[], cb?: (e: EventEmitter) => void) {
+    if (!config) {
+        throw new Error("turtle: drivers' configs are not exit");
+    }
+
     const ev = new EventEmitter();
     if (cb) {
         cb(ev);
@@ -64,7 +68,7 @@ export async function InitDriversFromCostructors(config: any, constructors: Func
         const driver = drivers[i];
         const key = driver.name;
         if (!config[key]) {
-            console.log(`config of driver ${key} are not exist`);
+            throw new Error(`config of driver ${key} are not exist`);
         }
         const value = await initDriver(config[key], driver);
         ev.emit(key, value);
