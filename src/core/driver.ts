@@ -1,6 +1,7 @@
 import {EventEmitter} from "events";
-import {importClasses} from "./utils/importClasses";
+import {importClasses, importFunctions} from "./utils/importClasses";
 import {IClass, SingletonFactory} from "./singletonFactory";
+import * as Path from "path";
 
 export interface IDriver<TConf, TService> {
     init(conf: TConf): Promise<TService>;
@@ -24,7 +25,7 @@ export function Driver(name?: string): Function {
 
 const driverFactory = new SingletonFactory();
 
-function pickDrivers(constructors: Function[]) : IDriverMetadata[]{
+function pickDrivers(constructors: Function[]): IDriverMetadata[] {
     return driverMetas.filter(dm => constructors.indexOf(dm.target) > -1);
 }
 
@@ -33,7 +34,25 @@ async function initDriver<TConf, TService>(conf: TConf, driver: IDriverMetadata)
     return await instance.init(conf);
 }
 
-export async function InitDrivers(config: any, constructors: Function[], cb?: (e: EventEmitter) => void) {
+export async function InitDrivers(config: any, classOrDirs: Array<string | Function>, cb?: (e: EventEmitter) => void) {
+    const constructors: Function[] = [];
+    classOrDirs.forEach(cod => {
+        if (typeof cod === "string") {
+            if (!Path.isAbsolute(cod)){
+                constructors.push(...importFunctions(Path.resolve(__dirname, "../driver", cod)));
+            }else {
+                constructors.push(...importClasses([cod]));
+            }
+        } else {
+            constructors.push(cod);
+        }
+    });
+    const results = await InitDriversFromCostructors(config, constructors, cb);
+    console.log("drivers loaded", Object.keys(results));
+    return results;
+}
+
+export async function InitDriversFromCostructors(config: any, constructors: Function[], cb?: (e: EventEmitter) => void) {
     const ev = new EventEmitter();
     if (cb) {
         cb(ev);
@@ -51,13 +70,6 @@ export async function InitDrivers(config: any, constructors: Function[], cb?: (e
         ev.emit(key, value);
         results[key] = value;
     }
-    console.log("drivers loaded", Object.keys(results));
-    // console.log("drivers loaded", results);
     return results;
-}
-
-export async function InitDriversFromDirs(config: any, dirs: string[], cb?: (e: EventEmitter) => void) {
-    const constructors: Function[] = importClasses(dirs);
-    return InitDrivers(config, constructors, cb);
 }
 
