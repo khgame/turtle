@@ -10,7 +10,7 @@ function ensureLogDir(folder?: string): string {
         logDir = path.resolve(logDir, folder);
     }
     if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir);
+        fs.mkdirSync(logDir, {recursive: true});
     }
     return logDir;
 }
