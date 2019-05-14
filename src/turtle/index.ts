@@ -7,6 +7,9 @@ import {EventEmitter} from "events";
 export class Turtle<IDrivers> {
 
     public conf: IConf;
+    public rules<TRules>(): TRules {
+        return this.conf.rules as TRules;
+    }
     public confPath: any;
 
     public get drivers(): IDrivers {
