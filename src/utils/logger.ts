@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import * as path from "path";
 import {createLogger, format, transports} from "winston";
 import * as DailyRotateFile from "winston-daily-rotate-file";
@@ -10,7 +10,7 @@ function ensureLogDir(folder?: string): string {
         logDir = path.resolve(logDir, folder);
     }
     if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, {recursive: true});
+        fs.ensureDirSync(logDir);
     }
     return logDir;
 }
