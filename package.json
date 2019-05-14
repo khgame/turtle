@@ -1,12 +1,13 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.2",
-  "description": "",
+  "version": "0.0.4",
+  "description": "A simple javascript/typescript server framework. ",
   "main": "lib/index.js",
   "scripts": {
     "build": "rimraf ./lib && npx tsc",
     "lint": "npx tslint --fix --project .",
-    "test": "mocha -r ts-node/register test/**/*.test.ts --exit"
+    "test": "mocha -r ts-node/register test/**/*.test.ts --exit",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
     "get-port": "^5.0.0",
     "glob": "^7.1.3",
     "ip": "^1.1.5",
+    "kht": "^0.0.9",
     "path": "^0.12.7",
     "typedi": "^0.8.0",
     "winston": "^3.2.1",
