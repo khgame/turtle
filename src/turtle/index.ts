@@ -12,18 +12,25 @@ export class Turtle<IDrivers> {
     public get drivers(): IDrivers {
         return this._drivers as IDrivers;
     }
+
     protected _drivers: any;
 
     public setConf(path: string, force: boolean) {
         if (!force && this.conf) {
             return;
         }
+        this.loadConf(path);
+    }
 
+    public loadConf(path?: string) {
+        if (!path) {
+            throw new Error(`given path(${path}) doesn't exist`);
+        }
+        path = path || this.confPath;
         path = Path.isAbsolute(path) ? path : Path.resolve(process.cwd(), path);
         if (!fs.existsSync(path)) {
             throw new Error(`conf file at path(${path}) cannot be found`);
         }
-
         let content = fs.readFileSync(path);
         try {
             this.conf = JSON.parse(content.toString());
