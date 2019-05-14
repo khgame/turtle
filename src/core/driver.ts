@@ -47,12 +47,12 @@ export async function InitDrivers(config: any, classOrDirs: Array<string | Funct
             constructors.push(cod);
         }
     });
-    const results = await InitDriversFromCostructors(config, constructors, cb);
+    const results = await InitDriversFromConstructors(config, constructors, cb);
     console.log("drivers loaded", Object.keys(results));
     return results;
 }
 
-export async function InitDriversFromCostructors(config: any, constructors: Function[], cb?: (e: EventEmitter) => void) {
+export async function InitDriversFromConstructors(config: any, constructors: Function[], cb?: (e: EventEmitter) => void) {
     if (!config) {
         throw new Error("turtle: drivers' configs are not exit");
     }
