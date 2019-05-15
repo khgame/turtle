@@ -25,7 +25,6 @@
     "no-empty": false,
     "no-empty-interface": false,
     "no-var-keyword": true,
-    "no-var-requires": true,
     "no-shadowed-variable": true,
     "label-position": true,
     "max-line-length": [

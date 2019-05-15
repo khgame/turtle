@@ -4,6 +4,8 @@ import {createLogger, format, transports} from "winston";
 import * as DailyRotateFile from "winston-daily-rotate-file";
 import {turtle} from "../turtle";
 
+export {Logger} from "winston";
+
 function ensureLogDir(folder?: string): string {
     let logDir: string = "logs";
     if (folder) {
@@ -15,18 +17,21 @@ function ensureLogDir(folder?: string): string {
     return logDir;
 }
 
+const fileTransports: any[] = [];
+
 function createFileTransport(label: string, options?: {
     prefix?: string
     zippedArchive?: boolean,
     maxSize?: string,
     maxFiles?: string
 }) {
-    const nameSpace = label ? label.split(":")[0] : "";
+    let nameSpace = label ? label.split(":")[0] : "";
+    nameSpace = nameSpace || "main";
     const fileName = `${nameSpace.replace(/[:,&|]/g, "-")}@%DATE%.log`;
     const logDir = ensureLogDir(
         ((options && options.prefix) ? `[${options.prefix.replace(/[:,&|]/g, "-")}]` : "+") +
         `${turtle.conf.name}#${turtle.conf.id}@${turtle.conf.port}`);
-    return new DailyRotateFile({
+    const transport = new DailyRotateFile({
         level: "verbose",
         filename: path.resolve(logDir, fileName),
         datePattern: "YYYY-MM-DD",
@@ -35,32 +40,51 @@ function createFileTransport(label: string, options?: {
         maxFiles: (options && options.maxFiles) || "21d",
         format: format.json(),
     });
+    fileTransports.push(transport);
+    return transport;
 }
 
 const loggers: any = {};
 
 export const genLogger = (label: string = "") => {
     const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
-    return loggers[label] || (loggers[label] = createLogger({
-        // change level if in dev environment versus production
-        level: inDev ? "debug" : "info",
-        format: format.combine(
-            format.timestamp({
-                format: "YYYY-MM-DD HH:mm:ss.SSS",
-            }),
-            format.label({label})
-        ),
-        transports: [
-            new transports.Console({
-                level: inDev ? "verbose" : "info",
-                format: format.combine(
-                    format.colorize(),
-                    format.printf((info) =>
-                        `[${info.timestamp}] [${info.level}] [${info.label || "*"}]: ${info.message}`),
-                ),
-            }),
-            createFileTransport(label),
-            createFileTransport("main")
-        ],
-    }));
+    if (loggers[label]) {
+        return loggers[label];
+    }
+    const t = [
+        new transports.Console({
+            level: inDev ? "verbose" : "info",
+            format: format.combine(
+                format.colorize(),
+                format.printf((info) =>
+                    `[${info.timestamp}] [${info.level}] [${info.label || "*"}]: ${info.message}`),
+            ),
+        }),
+        createFileTransport(label)
+    ];
+    if (label && label !== "main" && !label.startsWith("main:") && !label.startsWith(":")) {
+        t.push(createFileTransport("main"));
+    }
+
+    createFileTransport(label),
+        loggers[label] = createLogger({
+            // change level if in dev environment versus production
+            level: inDev ? "debug" : "info",
+            format: format.combine(
+                format.timestamp({
+                    format: "YYYY-MM-DD HH:mm:ss.SSS",
+                }),
+                format.label({label})
+            ),
+            transports: t,
+        });
+    return loggers[label];
 };
+
+export async function exitLog() {
+    genLogger().info(`★★ flush and shutdown all file loggers (${fileTransports.length}) ★★`);
+    await Promise.all(fileTransports.map(t => new Promise((resolve) => {
+        t.close();
+        t.on("finish", resolve);
+    })));
+}
