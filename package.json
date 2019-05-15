@@ -7,7 +7,8 @@
     "build": "rimraf ./lib && npx tsc",
     "lint": "npx tslint --fix --project .",
     "test": "mocha -r ts-node/register test/**/*.test.ts --exit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "ep:api": "ts-node ./example/api"
   },
   "repository": {
     "type": "git",

@@ -89,13 +89,13 @@ export class Turtle<IDrivers> {
                     this.log.warn(`api ${i} is in starting procedure, nothing changed.`);
                     break;
                 case APIRunningState.RUNNING:
-                    this.log.warn(`api ${i} are already in running, nothing changed.`);
+                    this.log.warn(`api ${i} is already in running procedure, nothing changed.`);
                     break;
                 case APIRunningState.CLOSING:
                     this.log.warn(`api ${i} is in closing procedure, nothing changed.`);
                     break;
                 case APIRunningState.CLOSED:
-                    this.log.info(`api ${i} is in already closed, try restart.`);
+                    this.log.info(`api ${i} is already closed, try restart.`);
                     if (await api.start(ports[i])) {
                         this.log.info(`api ${i} restarted.`);
                     } else {
@@ -119,20 +119,20 @@ export class Turtle<IDrivers> {
                     break;
                 case APIRunningState.STARTING:
                     if (await api.close()) {
-                        this.log.info(`api ${i} is closed in starting procedure.`);
+                        this.log.info(`api ${i} is closed at starting procedure.`);
                     } else {
                         this.log.warn(`close api ${i} in starting procedure failed.`);
                     }
                     break;
                 case APIRunningState.RUNNING:
                     if (await api.close()) {
-                        this.log.info(`api ${i} is closed in starting procedure.`);
+                        this.log.info(`api ${i} is closed at running procedure.`);
                     } else {
                         this.log.error(`close api ${i} in running procedure failed.`);
                     }
                     break;
                 case APIRunningState.CLOSING:
-                    this.log.warn(`api ${i} is already in closing procedure, nothing changed.`);
+                    this.log.warn(`api ${i} is already at closing procedure, nothing changed.`);
                     break;
                 case APIRunningState.CLOSED:
                     this.log.info(`api ${i} is already closed, nothing changed.`);

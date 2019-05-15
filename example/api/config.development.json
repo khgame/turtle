@@ -1,0 +1,9 @@
+{
+  "name": "example",
+  "id": 0,
+  "port": 8080,
+  "drivers": {
+  },
+  "rules": {
+  }
+}
