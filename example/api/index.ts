@@ -27,7 +27,6 @@ class ApiClass implements IApi {
     }
 }
 
-
 async function start() {
     /** 1. set config to turtle */
     turtle.setConf(Path.resolve(__dirname, `./config.${process.env.NODE_ENV || "development"}.json`), false);
@@ -36,17 +35,6 @@ async function start() {
     // await turtle.initialDrivers([]); // initial drivers if needed
     /** 3. put the api instance to turtle.startAll */
     await turtle.startAll([api]);
-
-    const exit = async () => {
-        console.log("\n★★ SIGINT received, please hold ★★");
-        await turtle.closeAll();
-        console.log("\n★★ process exited ★★");
-        process.exit(0);
-    };
-
-    process.on("SIGTERM", exit);
-    process.on("SIGINT", exit);
-
     setInterval(() => console.log("update " + Date.now()), 5000);
 }
 

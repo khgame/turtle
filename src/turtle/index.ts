@@ -3,9 +3,9 @@ import * as Path from "path";
 import {InitDrivers} from "../core";
 import {IConf} from "../conf/interfece";
 import {EventEmitter} from "events";
-import {APIRunningState, IApi} from "../api/interface";
-import {genLogger} from "../utils";
-import {Logger} from "winston";
+import {APIRunningState, IApi} from "../api";
+import {exitLog, genLogger, Logger} from "../utils";
+import {timeoutPromise} from "kht/lib";
 
 export class Turtle<IDrivers> {
 
@@ -106,6 +106,17 @@ export class Turtle<IDrivers> {
                     throw new Error("unknown running state code.");
             }
         }
+
+        const exit = async (sig: any) => {
+            this.log.info(`★★ SIG ${sig} received, please hold ★★`);
+            await this.closeAll();
+            this.log.info(`★★ process exited ★★`);
+            await timeoutPromise(3000, exitLog());
+            process.exit(0);
+        };
+
+        process.on("SIGTERM", () => exit("SIGTERM"));
+        process.on("SIGINT", () => exit("SIGINT"));
     }
 
     public async closeAll() {
@@ -145,3 +156,4 @@ export class Turtle<IDrivers> {
 }
 
 export const turtle = new Turtle<any>();
+
