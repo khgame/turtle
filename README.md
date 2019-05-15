@@ -45,8 +45,22 @@ turtle.initialDrivers([ "redis", "mongo" ]); // using built in drivers
 turtle.drivers.redis.set("key", "val")
 ```
 
-### drivers
+### using drivers
 
+### create api
+
+once you implemented an api, you can manage it's lifecycle like this
+```js
+    /** 1. set config to turtle */
+    turtle.setConf(/** ... */, false);
+    /** 2. create the api instance (or instances) */
+    const api = new ApiClass();
+    /** 3. put the api instance to turtle.startAll */
+    await turtle.startAll([api]);
+```
+
+> [this is an example](https://github.com/khgame/turtle/blob/master/example/api/index.ts)  
+> and you can clone the repo, and run `npm run ep:api` to test it by your self
 
 
 

@@ -1,12 +1,12 @@
 import {APIRunningState, IApi, turtle} from "../../src/";
 import * as Path from "path";
 
-class Application implements IApi {
+/** ApiClass is an implementation of IApi */
+class ApiClass implements IApi {
 
     enabled: boolean;
     runningRequest: number;
     runningState: APIRunningState;
-
 
     constructor() {
         this.runningState = APIRunningState.PREPARED;
@@ -29,10 +29,13 @@ class Application implements IApi {
 
 
 async function start() {
+    /** 1. set config to turtle */
     turtle.setConf(Path.resolve(__dirname, `./config.${process.env.NODE_ENV || "development"}.json`), false);
-    const app = new Application();
-    await turtle.initialDrivers([]);
-    await turtle.startAll([app]);
+    /** 2. create the api instance (or instances) */
+    const api = new ApiClass();
+    // await turtle.initialDrivers([]); // initial drivers if needed
+    /** 3. put the api instance to turtle.startAll */
+    await turtle.startAll([api]);
 
     const exit = async () => {
         console.log("\n★★ SIGINT received, please hold ★★");
