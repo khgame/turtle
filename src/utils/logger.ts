@@ -37,10 +37,11 @@ function createFileTransport(label: string, options?: {
     });
 }
 
+const loggers: any = {};
 
 export const genLogger = (label: string = "") => {
     const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
-    return createLogger({
+    return loggers[label] || (loggers[label] = createLogger({
         // change level if in dev environment versus production
         level: inDev ? "debug" : "info",
         format: format.combine(
@@ -61,5 +62,5 @@ export const genLogger = (label: string = "") => {
             createFileTransport(label),
             createFileTransport("main")
         ],
-    });
+    }));
 };
