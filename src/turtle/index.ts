@@ -9,7 +9,13 @@ import {timeoutPromise} from "kht/lib";
 
 export class Turtle<IDrivers> {
 
-    protected log: Logger;
+    protected get log(): Logger {
+        if(this._log) {
+            return this._log;
+        }
+        return this._log = genLogger();
+    }
+    protected _log: Logger;
 
     public conf: IConf;
 

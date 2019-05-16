@@ -25,6 +25,10 @@ function createFileTransport(label: string, options?: {
     maxSize?: string,
     maxFiles?: string
 }) {
+    if (!turtle.conf){
+        console.error(`create transport error, turtle's config haven't been set`);
+    }
+
     let nameSpace = label ? label.split(":")[0] : "";
     nameSpace = nameSpace || "main";
     const fileName = `${nameSpace.replace(/[:,&|]/g, "-")}@%DATE%.log`;
