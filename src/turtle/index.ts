@@ -56,7 +56,6 @@ export class Turtle<IDrivers> {
             throw new Error(`parse conf file at path(${path}) failed, content: ${content.toString()}`);
         }
         this.confPath = path;
-        this.log = genLogger();
     }
 
     public async initialDrivers(drivers: Array<string | Function>, cb?: (e: EventEmitter) => void) {
