@@ -32,15 +32,8 @@ export class Turtle<IDrivers> {
         return this._drivers as IDrivers;
     }
 
-    public driver<TService>() { // todo: refine this
-        let result: TService;
-        for (let key in this._drivers) {
-            try {
-                result = this._drivers[key];
-            } catch (e) {
-            }
-        }
-        return result;
+    public driver<TService>(name?: string) {
+        return name ? this._drivers[name] : undefined;
     }
 
     protected _drivers: { [key: string]: any };

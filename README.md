@@ -43,8 +43,8 @@ turtle.initialDrivers([ "redis", "mongo" ]); // using built in drivers
 // to using mongo driver, mongoose should be installed
 
 ...
-await turtle.drivers.redis.set("key", "val") // dynamic
-await turtle.getDriver<ITurtleRedis>().get("key") // by interface
+await turtle.drivers.redis.set("key", "val"); // dynamic
+await turtle.drivers("redis").get("key");
 ...
 
 ```

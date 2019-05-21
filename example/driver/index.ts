@@ -1,6 +1,5 @@
-import {turtle} from "../../src/";
+import {turtle, ITurtleRedis} from "../../src/";
 import * as Path from "path";
-import {ITurtleRedis} from "../../src/driver/redis";
 
 async function start() {
     /** 0. environment
@@ -14,11 +13,13 @@ async function start() {
     /** 2. using default redis driver */
     await turtle.initialDrivers(["mongo", "redis"]);
     /** 3. using interface-api */
-    const redis = turtle.driver<ITurtleRedis>();
-    await redis.set("driver_test", 1);
+    const random = Math.random();
+    const redis = await turtle.driver("redis") as ITurtleRedis;
+
+    await redis.set("driver_test", random);
     /** 4. using dynamic-api */
     const result = await turtle.drivers.redis.get("driver_test");
-    console.log(result);
+    console.log("result", random, result);
     setInterval(() => console.log("update " + Date.now()), 5000);
 }
 
