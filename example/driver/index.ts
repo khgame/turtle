@@ -1,5 +1,6 @@
-import {turtle, ITurtleRedis} from "../../src/";
+import {turtle, ITurtleRedis, RedisDriver} from "../../src/";
 import * as Path from "path";
+import {Redis} from "ioredis";
 
 async function start() {
     /** 0. environment
@@ -15,6 +16,8 @@ async function start() {
     /** 3. using interface-api */
     const random = Math.random();
     const redis = await turtle.driver("redis") as ITurtleRedis;
+    // or redis RedisDriver.inst;
+    console.log(redis === RedisDriver.inst);
 
     await redis.set("driver_test", random);
     /** 4. using dynamic-api */

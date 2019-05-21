@@ -1,6 +1,7 @@
 import * as IORedis from "ioredis";
 import {forMs} from "kht";
 import {Driver, IDriver} from "../core";
+import {turtle} from "../turtle";
 
 export interface IRedisConf extends IORedis.RedisOptions {
     key_mutex_wait_threshold?: number;
@@ -48,8 +49,14 @@ async function dUnlock(key: string, lockerIdentity: string): Promise<-1 | 0 | 1>
     return await this.pexpire(redisKey, 1);
 }
 
-@Driver("redis")
+const DRIVER_NAME = "redis";
+
+@Driver(DRIVER_NAME)
 export class RedisDriver implements IDriver<IRedisConf, ITurtleRedis>{
+
+    public static get inst(): ITurtleRedis{
+        return turtle.driver(DRIVER_NAME) as ITurtleRedis;
+    }
 
     protected ioredis: IORedis.Redis;
 
