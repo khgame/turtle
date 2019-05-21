@@ -3,6 +3,7 @@ import {importClasses, importFunctions} from "./utils/importClasses";
 import {IClass, SingletonFactory} from "./singletonFactory";
 import * as Path from "path";
 
+
 export interface IDriver<TConf, TService> {
     init(conf: TConf): Promise<TService>;
 }
@@ -63,7 +64,7 @@ export async function InitDriversFromConstructors(config: any, constructors: Fun
     }
 
     const drivers = pickDrivers(constructors);
-    let results: any = {};
+    let results: { [key: string]: any} = {};
     for (const i in drivers) {
         const driver = drivers[i];
         const key = driver.name;

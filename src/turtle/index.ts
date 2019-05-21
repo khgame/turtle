@@ -10,11 +10,12 @@ import {timeoutPromise} from "kht/lib";
 export class Turtle<IDrivers> {
 
     protected get log(): Logger {
-        if(this._log) {
+        if (this._log) {
             return this._log;
         }
         return this._log = genLogger();
     }
+
     protected _log: Logger;
 
     public conf: IConf;
@@ -31,7 +32,18 @@ export class Turtle<IDrivers> {
         return this._drivers as IDrivers;
     }
 
-    protected _drivers: any;
+    public driver<TService>() { // todo: refine this
+        let result: TService;
+        for (let key in this._drivers) {
+            try {
+                result = this._drivers[key];
+            } catch (e) {
+            }
+        }
+        return result;
+    }
+
+    protected _drivers: { [key: string]: any };
 
     public setConf(path: string, force: boolean) {
         if (!force && this.conf) {
