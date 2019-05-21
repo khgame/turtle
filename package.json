@@ -8,7 +8,8 @@
     "lint": "npx tslint --fix --project .",
     "test": "mocha -r ts-node/register test/**/*.test.ts --exit",
     "prepublishOnly": "npm run build",
-    "ep:api": "ts-node ./example/api"
+    "ep:api": "ts-node ./example/api",
+    "ep:driver": "ts-node ./example/driver"
   },
   "repository": {
     "type": "git",
