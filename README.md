@@ -11,7 +11,7 @@ or using yarn
 ### quick start 
 
 ```typescript
-import {turtle, ITurtleRedis} from "@khgame/turtle"
+import {turtle, ITurtleRedis, RedisDriver} from "@khgame/turtle"
 
 turtle.setConf({
                  "name": "server_name",
@@ -42,10 +42,11 @@ turtle.initialDrivers([ "redis", "mongo" ]); // using built in drivers
 // to using redis driver, redisio should be installed
 // to using mongo driver, mongoose should be installed
 
-...
-await turtle.drivers.redis.set("key", "val"); // dynamic
+//... 
+await RedisDriver.inst.redis.set("key", "val"); // or you can use turtle.drivers
 await turtle.drivers("redis").get("key");
-...
+//RedisDriver.inst 
+//...
 
 ```
 
