@@ -5,7 +5,7 @@ import {turtle} from "../turtle";
 import {IApi} from "../api";
 import {IConf} from "../conf/interfece";
 
-export class CommondLineApp {
+export class CommandLineApp {
 
     constructor(
         public appName: string,

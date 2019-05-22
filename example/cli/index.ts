@@ -1,4 +1,4 @@
-import {CommondLineApp} from "../../src/cli/app";
+import {CommandLineApp} from "../../src/cli/app";
 import {APIRunningState, IApi} from "../../src";
 
 class ApiClass implements IApi {
@@ -26,7 +26,7 @@ class ApiClass implements IApi {
     }
 }
 
-const cli = new CommondLineApp("example", "0.0.1", [], [new ApiClass()], {
+const cli = new CommandLineApp("example", "0.0.1", [], [new ApiClass()], {
         "name": "example",
         "id": 0,
         "port": 8080,
