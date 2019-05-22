@@ -17,14 +17,12 @@ export class CommondLineApp {
 
     }
 
-    get defaultConfName(){
+    get defaultConfName() {
         const envStr = process.env.NODE_ENV || "development";
         return `${this.appName}.${envStr}.json`;
     }
 
     setConfig(path?: string, port?: number) {
-
-
         /** set default conf */
         turtle.conf = this.defaultConf;
 
@@ -33,24 +31,32 @@ export class CommondLineApp {
             /** 1. has been set */
             if (path) {
                 try {
-                    turtle.setConf(path, false);
+                    turtle.setConf(path, true);
                     break;
                 } catch (e) {
+                    console.error(`load config from ${path} failed`);
+                    break;
                 }
             }
 
+            let confPath = Path.resolve(process.cwd(), this.defaultConfName);
             /** 2. try use $pwd/ */
             try {
-                turtle.setConf(Path.resolve(process.cwd(), this.defaultConfName), false);
+                turtle.setConf(confPath, true);
+                console.error(`load config from ${confPath} success`);
                 break;
             } catch (ex) {
+                console.error(`load config from ${confPath} failed`);
             }
 
+            confPath = `/etc/turtle.d/${this.defaultConfName}`;
             /** 3. try use /etc/turtle.d/ */
             try {
-                turtle.setConf(`/etc/turtle.d/${this.defaultConfName}`, false);
+                turtle.setConf(confPath, true);
+                console.error(`load config from ${confPath} success`);
                 break;
             } catch (ex) {
+                console.error(`load config from ${confPath} failed`);
             }
 
         } while (false);
@@ -78,9 +84,13 @@ export class CommondLineApp {
                 `the port to serve api, will override the setting in config file, ${this.defaultConf.port} by default`)
             .action(async (options) => {
                 this.setConfig(options && options.path, options && options.port);
-                console.log("config path :", turtle.confPath);
+                console.log("config path :", turtle.confPath, this.drivers, this.apis);
                 await turtle.initialDrivers(this.drivers);
                 await turtle.startAll(this.apis);
+                console.log(`turtle started:
+config => ${JSON.stringify(turtle.conf)}
+drivers => ${JSON.stringify(turtle.drivers)}
+apis => ${JSON.stringify(turtle.apis)}`);
             });
 
         commander.command("extract")
@@ -98,7 +108,7 @@ export class CommondLineApp {
 
     run() {
         this.main().then(() => {
-            console.info(`running ${this.appName}(@khgame/turtle) succeeded. \nconfig => ${turtle.conf}\n`);
+            console.info(`running ${this.appName}(@khgame/turtle) succeeded.\n`);
         }).catch((reason => {
             console.error(`running ${this.appName}(@khgame/turtle)failed.\nerr => ${reason}`);
             process.exit(1);
