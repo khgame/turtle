@@ -84,13 +84,11 @@ export class CommandLineApp {
                 `the port to serve api, will override the setting in config file, ${this.defaultConf.port} by default`)
             .action(async (options) => {
                 this.setConfig(options && options.path, options && options.port);
-                console.log("config path :", turtle.confPath, this.drivers, this.apis);
+                // console.log("config path :", turtle.confPath, this.drivers, this.apis);
                 await turtle.initialDrivers(this.drivers);
                 await turtle.startAll(this.apis.map(f => f()));
                 console.log(`turtle started:
-config => ${JSON.stringify(turtle.conf)}
-drivers => ${JSON.stringify(turtle.drivers)}
-apis => ${JSON.stringify(turtle.apis)}`);
+config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
             });
 
         commander.command("extract")
