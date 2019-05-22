@@ -11,7 +11,7 @@ export class CommandLineApp {
         public appName: string,
         public version: string,
         protected drivers: Array<string | Function>,
-        protected apis: IApi[],
+        protected apis: Array<() => IApi>,
         protected defaultConf: IConf
     ) {
 
@@ -86,7 +86,7 @@ export class CommandLineApp {
                 this.setConfig(options && options.path, options && options.port);
                 console.log("config path :", turtle.confPath, this.drivers, this.apis);
                 await turtle.initialDrivers(this.drivers);
-                await turtle.startAll(this.apis);
+                await turtle.startAll(this.apis.map(f => f()));
                 console.log(`turtle started:
 config => ${JSON.stringify(turtle.conf)}
 drivers => ${JSON.stringify(turtle.drivers)}
