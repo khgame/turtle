@@ -10,7 +10,7 @@
     "prepublishOnly": "npm run build",
     "ep:api": "ts-node ./example/api",
     "ep:driver": "ts-node ./example/driver",
-    "ep:cli": "ts-node ./example/cli"
+    "ep:cli": "ts-node ./example/cli start"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/khgame/turtle#readme",
   "dependencies": {
-    "@khgame/jsonrpc": "^0.1.2",
+    "@khgame/jsonrpc": "^0.1.5",
     "@khgame/one-line-call": "^0.1.5",
     "axios": "^0.18.0",
     "elliptic": "^6.4.1",

@@ -6,6 +6,7 @@ import {EventEmitter} from "events";
 import {APIRunningState, IApi} from "../api";
 import {exitLog, genLogger, Logger} from "../utils";
 import {timeoutPromise} from "kht/lib";
+import {listenCommands} from "./commands";
 
 export class Turtle<IDrivers> {
 
@@ -49,6 +50,7 @@ export class Turtle<IDrivers> {
         if (!this.confPath) {
             throw new Error(`cannot reload conf cuz the conf path are not set`);
         }
+        this.log.info(`config reloaded (${this.confPath}): ${JSON.stringify(this.conf)}`);
         this.loadConf(this.confPath);
     }
 
@@ -133,6 +135,8 @@ export class Turtle<IDrivers> {
 
         process.on("SIGTERM", () => exit("SIGTERM"));
         process.on("SIGINT", () => exit("SIGINT"));
+
+        await listenCommands();
     }
 
     public async closeAll() {
@@ -172,4 +176,3 @@ export class Turtle<IDrivers> {
 }
 
 export const turtle = new Turtle<any>();
-
