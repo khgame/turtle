@@ -67,5 +67,27 @@ once you implemented an api, you can manage it's lifecycle like this
 > [this is an example](https://github.com/khgame/turtle/blob/master/example/api/index.ts)  
 > and you can clone the repo, and run `npm run ep:api` to test it by your self
 
+### starting with cli application
+
+you can easily create your turtle cli application with several definitions
+```js
+// bin/index.ts
+const cli = new CommondLineApp("example", "0.0.1", [], [new ApiClass()], {
+        "name": "example",
+        "id": 0,
+        "port": 8080,
+        "drivers": {
+        },
+        "rules": {
+        }
+    }
+);
+
+cli.run();
+```
+
+> [this is an example](https://github.com/khgame/turtle/blob/master/example/cli/index.ts)  
+> and you can clone the repo, and run `npm run ep:cli` to test it by your self
+
 
 
