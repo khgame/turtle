@@ -26,14 +26,17 @@ class ApiClass implements IApi {
     }
 }
 
-const cli = new CommandLineApp("example", "0.0.1", [], [new ApiClass()], {
+const cli = new CommandLineApp(
+    "example",
+    "0.0.1",
+    [],
+    [() => new ApiClass()],
+    {
         "name": "example",
         "id": 0,
         "port": 8080,
-        "drivers": {
-        },
-        "rules": {
-        }
+        "drivers": {},
+        "rules": {}
     }
 );
 

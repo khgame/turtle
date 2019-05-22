@@ -87,7 +87,7 @@ cli.run();
 ```
 
 > [this is an example](https://github.com/khgame/turtle/blob/master/example/cli/index.ts)  
-> and you can clone the repo, and run `npm run ep:cli` to test it by your self
+> and you can clone the repo, and run `npm run ep:cli --help` to test it by your self
 
 
 

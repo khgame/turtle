@@ -4,6 +4,8 @@ import * as fs from "fs-extra";
 import {turtle} from "../turtle";
 import {IApi} from "../api";
 import {IConf} from "../conf/interfece";
+import {CommandsAPI} from "../turtle/commands";
+import {Client} from "@khgame/jsonrpc/lib";
 
 export class CommandLineApp {
 
@@ -101,7 +103,31 @@ config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
                 process.exit(0);
             });
 
+        commander.command("reload")
+            .description("reload the service")
+            .option("-p, --port <port>", `the port of the process`)
+            .action(async (options) => {
+
+                if (!options || !options.port) {
+                    console.log("must provide the process port");
+                    return;
+                }
+
+                const command = new CommandsAPI();
+                const result = await Client.singleRPC("turtle", `http://localhost:${options.port}`, () => command.reload());
+                console.log("rpc result", result);
+                process.exit(0);
+            });
+
         commander.parse(process.argv);
+
+        /**
+         * todo list
+         *
+         * - matrix
+         * - reload log
+         * - signal
+         */
     }
 
     run() {
