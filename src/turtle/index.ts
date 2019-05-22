@@ -45,11 +45,17 @@ export class Turtle<IDrivers> {
         this.loadConf(path);
     }
 
+    public reloadConf() {
+        if (!this.confPath) {
+            throw new Error(`cannot reload conf cuz the conf path are not set`);
+        }
+        this.loadConf(this.confPath);
+    }
+
     public loadConf(path?: string) {
         if (!path) {
-            throw new Error(`given path(${path}) doesn't exist`);
+            throw new Error(`cannot reload conf cuz the given path does not exist`);
         }
-        path = path || this.confPath;
         path = Path.isAbsolute(path) ? path : Path.resolve(process.cwd(), path);
         if (!fs.existsSync(path)) {
             throw new Error(`conf file at path(${path}) cannot be found`);
