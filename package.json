@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A simple javascript/typescript server framework. ",
   "main": "lib/index.js",
   "scripts": {
@@ -9,7 +9,8 @@
     "test": "mocha -r ts-node/register test/**/*.test.ts --exit",
     "prepublishOnly": "npm run build",
     "ep:api": "ts-node ./example/api",
-    "ep:driver": "ts-node ./example/driver"
+    "ep:driver": "ts-node ./example/driver",
+    "ep:cli": "ts-node ./example/cli"
   },
   "repository": {
     "type": "git",
