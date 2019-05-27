@@ -73,8 +73,14 @@ export class Turtle<IDrivers> {
 
     public async initialDrivers(drivers: Array<string | Function>, cb?: (e: EventEmitter) => void) {
         const results = await InitDrivers(this.conf.drivers, drivers, cb);
-        this._drivers = this._drivers ? {...this._drivers, ...results} : results; // override
-        console.log("\nDRIVERS INITIALED\n");
+        try {
+            this._drivers = this._drivers ? {...this._drivers, ...results} : results; // override
+        }
+        catch (ex){
+            console.error(`INITIAL DRIVERS FAILED, ${ex}`);
+            throw ex;
+        }
+        console.log("DRIVERS INITIALED");
     }
 
     public async startAll(apis: IApi[]) {
