@@ -17,6 +17,11 @@
       "port": 6379,
       "keyPrefix": "turtle_example:",
       "key_mutex_wait_threshold": 100
+    },
+    "discover/consul": {
+      "health": {
+        "api": "api/health"
+      }
     }
   },
   "rules": {

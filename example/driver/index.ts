@@ -12,7 +12,7 @@ async function start() {
     /** 1. set config to turtle */
     turtle.setConf(Path.resolve(__dirname, `./config.${process.env.NODE_ENV || "development"}.json`), false);
     /** 2. using default redis driver */
-    await turtle.initialDrivers(["mongo", "redis"]);
+    await turtle.initialDrivers(["mongo", "redis", "discover/consul"]);
     /** 3. using interface-api */
     const random = Math.random();
     const redis = await turtle.driver("redis") as ITurtleRedis;
