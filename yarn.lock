@@ -70,6 +70,13 @@
   dependencies:
     chalk "*"
 
+"@types/consul@^0.23.33":
+  version "0.23.33"
+  resolved "https://registry.npm.taobao.org/@types/consul/download/@types/consul-0.23.33.tgz#ef9876fd75fdfed9b5b1afe320ccdb6456eb90d2"
+  integrity sha1-75h2/XX9/tm1sa/jIMzbZFbrkNI=
+  dependencies:
+    "@types/node" "*"
+
 "@types/elliptic@^6.4.8":
   version "6.4.8"
   resolved "https://registry.npm.taobao.org/@types/elliptic/download/@types/elliptic-6.4.8.tgz#9875bb1ccdfeaf786a2713375f7934f73da57adb"
