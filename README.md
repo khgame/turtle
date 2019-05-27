@@ -32,15 +32,22 @@ turtle.setConf({
                      "port": 6379,
                      "keyPrefix": "KH_NFTServ_default_redisKey:",
                      "key_mutex_wait_threshold": 100
-                   }
+                   },
+                   "discover/consul": {
+                         "health": {
+                           "api": "api/health"
+                         }
+                   },
+                   CUSTOM_DRIVER_CLASS
                  },
                  "rules": {}
                });
 // console.log(turtle.conf) // by this you can access the config
 
-turtle.initialDrivers([ "redis", "mongo" ]); // using built in drivers
-// to using redis driver, redisio should be installed
-// to using mongo driver, mongoose should be installed
+turtle.initialDrivers([ "redis", "mongo", "discover/consul" ]); // using built in drivers
+// to use redis driver, redisio should be installed
+// to use mongo driver, mongoose should be installed
+// to use discover/consul driver, consul should be installed
 
 //... 
 await RedisDriver.inst.redis.set("key", "val"); // or you can use turtle.drivers
@@ -51,6 +58,12 @@ await turtle.drivers("redis").get("key");
 ```
 
 ### using drivers
+
+#### mongo
+
+#### redis
+
+#### discover/consul
 
 ### create api
 
