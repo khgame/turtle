@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "A simple javascript/typescript server framework. ",
   "main": "lib/index.js",
   "scripts": {
