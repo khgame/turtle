@@ -1,5 +1,12 @@
 # Turtle
 
+## Features
+
+- zero-config service discovery / rpc
+- progressive development
+- graceful exit
+- command line interface
+
 ## usage
 
 ### install
