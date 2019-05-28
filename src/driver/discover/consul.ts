@@ -1,6 +1,5 @@
-import {Driver, IDriver} from "../../core";
-import {turtle} from "../../turtle";
 import * as Consul from "consul";
+import {Driver, IDriver, turtle} from "../../";
 
 export interface IConsulConf {
     tags?: string[];
@@ -15,7 +14,13 @@ export interface IConsulConf {
 @Driver("discover/consul")
 export class DiscoverConsulDriver implements IDriver<IConsulConf, any> {
 
+    public static inst: DiscoverConsulDriver;
+
     protected consul: Consul.Consul;
+
+    constructor() {
+        DiscoverConsulDriver.inst = this;
+    }
 
     protected loadConsul() {
         if (!require) {
@@ -35,14 +40,20 @@ export class DiscoverConsulDriver implements IDriver<IConsulConf, any> {
 
         const consul = this.loadConsul();
 
+        const exist = await this.exist();
+        if (exist) {
+            throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
+        }
+
         const check = {
             http: `http://localhost:${turtle.conf.port}/${conf.health.api}`,
             interval: conf.health.interval || "5s",
             notes: conf.health.notes,
             status: conf.health.status
         };
+
         consul.agent.service.register({
-                id: `${turtle.conf.name}-${turtle.conf.id}`,
+                id: `${turtle.conf.name}:${turtle.conf.id}`,
                 name: turtle.conf.name,
                 tags: conf.tags,
                 check
@@ -54,7 +65,47 @@ export class DiscoverConsulDriver implements IDriver<IConsulConf, any> {
             }
         );
 
+
         return consul;
+    }
+
+    get id() {
+        return `${turtle.conf.name}:${turtle.conf.id}`;
+    }
+
+    async serviceList(): Promise<{ [key: string]: any }> {
+        return await new Promise((resolve, reject) => this.consul.agent.service.list((err, result) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        }));
+    }
+
+    async checkList(): Promise<{ [key: string]: any }> {
+        return await new Promise((resolve, reject) => this.consul.agent.check.list((err, result) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        }));
+    }
+
+    async exist() {
+        const services = await this.serviceList();
+        const checks = await this.checkList();
+
+        const combinedId = this.id;
+        const service = services[combinedId];
+        if (!service) {
+            return false;
+        }
+
+        const check = checks[`service:${combinedId}`];
+        if (!check) {
+            return true;
+        }
+        return check.Status === "passing";
     }
 }
 
