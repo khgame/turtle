@@ -1,7 +1,10 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.14",
-  "description": "A simple javascript/typescript server framework. ",
+  "version": "0.0.15",
+  "description": "An enterprise level javascript/typescript server framework.",
+  "keywords": [
+    "web", "application", "microservice", "distributed", "cluster", "middleware", "driver", "plugin", "framework"
+  ],
   "main": "lib/index.js",
   "scripts": {
     "build": "rimraf ./lib && npx tsc",

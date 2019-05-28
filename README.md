@@ -2,7 +2,9 @@
 
 ## Features
 
-- zero-config service discovery / rpc
+- plugin system
+- zero-configuration service discovery / rpc
+- distributed lock
 - progressive development
 - graceful exit
 - command line interface
