@@ -51,7 +51,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }
 
         const check = {
-            http: `http://localhost:${turtle.conf.port}/${this.conf.health.api}`,
+            http: `http://localhost:${turtle.runtime.port}/${this.conf.health.api}`,
             interval: this.conf.health.interval || "5s",
             notes: this.conf.health.notes,
             status: this.conf.health.status

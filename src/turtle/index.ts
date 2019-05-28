@@ -20,7 +20,7 @@ export class Turtle<IDrivers> {
 
     protected _log: Logger;
 
-    protected runtime: Runtime;
+    public runtime: Runtime;
 
     public conf: IConf;
 

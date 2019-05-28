@@ -2,6 +2,9 @@ import * as getPort from "get-port";
 import * as ip from "ip";
 import {Server} from "@khgame/jsonrpc/lib";
 import {CommandsAPI} from "./commands";
+import * as path from "path";
+import {turtle} from "./index";
+import * as fs from "fs-extra";
 
 export class Runtime {
     public port: number;
@@ -20,6 +23,7 @@ export class Runtime {
         console.log(`start commands server at ${url}, targets => ${target}`);
 
         this.cmd_port = port;
+        this.save();
     }
 
     setProcessInfo(port: number){
@@ -27,5 +31,11 @@ export class Runtime {
         this.port = port;
         this.pid = process.pid;
         this.cwd = process.cwd();
+        this.save();
+    }
+
+    save(){
+        const p = path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
+        fs.writeFileSync(p, JSON.stringify(this, null, 2));
     }
 }
