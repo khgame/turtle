@@ -95,7 +95,11 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     async httpClient(serviceName: string) { // todo: cache
         const services = await this.serviceList(serviceName);
-        const servicesArr = Object.values(services);
+        const servicesArr = Object.values(services).filter(s => s.Address && s.Port);
+        if (!servicesArr || servicesArr.length <= 0) {
+            console.log("error servicesArr", servicesArr);
+            return null; // todo: cache request?
+        }
         const service = servicesArr[Math.floor(Math.random() * servicesArr.length)];
         return createHttpClient(`http://${service.Address}:${service.Port}`);
     }
@@ -110,7 +114,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         if (!serviceName) {
             return services;
         }
-        const ret: any = {}
+        const ret: any = {};
         for (const key in services) { // todo: imp this
             const service = services[key];
             if (service.Service === serviceName) {
