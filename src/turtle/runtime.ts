@@ -20,7 +20,7 @@ export class Runtime {
         server.listen(port);
         const url = `${ip.address()}:${port}`;
         const target = server.getTarget(CommandsAPI);
-        console.log(`start commands server at ${url}, targets => ${target}`);
+        console.log(`start commands server at ${url}, targets => ${JSON.stringify(target)}`);
 
         this.cmd_port = port;
         this.save();

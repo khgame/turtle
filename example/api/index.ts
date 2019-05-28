@@ -34,7 +34,7 @@ async function start() {
     const api = new ApiClass();
     // await turtle.initialDrivers([]); // initial drivers if needed
     /** 3. put the api instance to turtle.startAll */
-    await turtle.startAll([api]);
+    await turtle.startAll(api);
     setInterval(() => console.log("update " + Date.now()), 5000);
 }
 

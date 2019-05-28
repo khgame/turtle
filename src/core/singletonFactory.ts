@@ -17,6 +17,6 @@ export class SingletonFactory implements ISingletonFactory{
         }
         return instance.object;
     }
-    get instances(): Array<{ type: Function, object: any }> { return this.instances; }
+    get instances(): Array<{ type: Function, object: any }> { return this._instances; }
 }
 

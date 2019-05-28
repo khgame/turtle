@@ -30,7 +30,9 @@ const cli = new CommandLineApp(
     "example",
     "0.0.1",
     [],
-    [() => new ApiClass()],
+    () => new ApiClass(),
+    undefined
+    ,
     {
         "name": "example",
         "id": 0,
