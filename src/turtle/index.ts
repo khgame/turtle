@@ -95,8 +95,8 @@ export class Turtle<IDrivers> {
         } else {
             let ports: number[] = (typeof turtle.conf.port === "number") ? [turtle.conf.port] : turtle.conf.port;
             port = await getPort({port: ports});
-            if (ports.indexOf(port) <= 0) {
-                throw new Error(`startApi: ports are occupied, ${ports}`);
+            if (ports.indexOf(port) < 0) {
+                throw new Error(`startApi: ports are occupied, ${ports}. avaliable: ${port}`);
             }
         }
         switch (api.runningState) {
