@@ -17,3 +17,14 @@ export interface IApi {
     start(port: number) : Promise<boolean>;
     close() : Promise<boolean>;
 }
+
+
+export interface IWorker {
+    enabled: boolean;
+    runningRequest: number;
+
+    runningState: APIRunningState;
+
+    start(port: number) : Promise<boolean>;
+    close() : Promise<boolean>;
+}
