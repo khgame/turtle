@@ -3,9 +3,10 @@ import {importClasses, importFunctions} from "./utils/importClasses";
 import {IClass, SingletonFactory} from "./singletonFactory";
 import * as Path from "path";
 
-
-export interface IDriver<TConf, TService> {
+export interface IDriverAdaptor<TConf, TService> {
     init(conf: TConf): Promise<TService>;
+    onStart?(): Promise<void>;
+    onClose?(): Promise<void>;
 }
 
 interface IDriverMetadata {
@@ -24,14 +25,14 @@ export function Driver(name?: string): Function {
     };
 }
 
-const driverFactory = new SingletonFactory();
+export const driverFactory = new SingletonFactory();
 
 function pickDrivers(constructors: Function[]): IDriverMetadata[] {
     return driverMetas.filter(dm => constructors.indexOf(dm.target) > -1);
 }
 
 async function initDriver<TConf, TService>(conf: TConf, driver: IDriverMetadata) {
-    const instance = driverFactory.get(driver.target as IClass<IDriver<TConf, TService>>);
+    const instance = driverFactory.get(driver.target as IClass<IDriverAdaptor<TConf, TService>>);
     return await instance.init(conf);
 }
 

@@ -1,6 +1,6 @@
 import * as fs from "fs-extra";
 import * as Path from "path";
-import {InitDrivers} from "../core";
+import {driverFactory, InitDrivers} from "../core";
 import {IConf} from "../conf/interfece";
 import {EventEmitter} from "events";
 import {APIRunningState, IApi, IWorker} from "../api";
@@ -183,6 +183,7 @@ export class Turtle<IDrivers> {
         if (workers) {
             await this.startWorkers(workers);
         }
+
         const exit = async (sig: any) => {
             this.log.info(`★★ SIG ${sig} received, please hold ★★`);
             await this.closeAll();
@@ -195,39 +196,86 @@ export class Turtle<IDrivers> {
         process.on("SIGINT", () => exit("SIGINT"));
 
         await listenCommands();
+
+        for (let i in driverFactory.instances) {
+            const driverAdaptor = driverFactory.instances[i].object;
+            if (driverAdaptor.onStart) {
+                await driverAdaptor.onStart();
+            }
+        }
     }
 
     public async closeAll() {
-        for (const i in this.workers) {
-            const worker = this.workers[i];
-            switch (worker.runningState) {
-                case APIRunningState.NONE:
-                    throw new Error(`worker ${i} hasn't prepared, cannot be stop.`);
-                case APIRunningState.PREPARED:
-                    this.log.warn(`worker ${i} is in prepared but not running, nothing changed.`);
-                    break;
-                case APIRunningState.STARTING:
-                    if (await worker.close()) {
-                        this.log.info(`worker ${i} is closed at starting procedure.`);
-                    } else {
-                        this.log.warn(`close worker ${i} in starting procedure failed.`);
-                    }
-                    break;
-                case APIRunningState.RUNNING:
-                    if (await worker.close()) {
-                        this.log.info(`worker ${i} is closed at running procedure.`);
-                    } else {
-                        this.log.error(`close worker ${i} in running procedure failed.`);
-                    }
-                    break;
-                case APIRunningState.CLOSING:
-                    this.log.warn(`worker ${i} is already at closing procedure, nothing changed.`);
-                    break;
-                case APIRunningState.CLOSED:
-                    this.log.info(`worker ${i} is already closed, nothing changed.`);
-                    break;
-                default:
-                    throw new Error("unknown running state code.");
+        if (this.workers) {
+            for (const i in this.workers) {
+                const worker = this.workers[i];
+                switch (worker.runningState) {
+                    case APIRunningState.NONE:
+                        throw new Error(`worker ${i} hasn't prepared, cannot be stop.`);
+                    case APIRunningState.PREPARED:
+                        this.log.warn(`worker ${i} is in prepared but not running, nothing changed.`);
+                        break;
+                    case APIRunningState.STARTING:
+                        if (await worker.close()) {
+                            this.log.info(`worker ${i} is closed at starting procedure.`);
+                        } else {
+                            this.log.warn(`close worker ${i} in starting procedure failed.`);
+                        }
+                        break;
+                    case APIRunningState.RUNNING:
+                        if (await worker.close()) {
+                            this.log.info(`worker ${i} is closed at running procedure.`);
+                        } else {
+                            this.log.error(`close worker ${i} in running procedure failed.`);
+                        }
+                        break;
+                    case APIRunningState.CLOSING:
+                        this.log.warn(`worker ${i} is already at closing procedure, nothing changed.`);
+                        break;
+                    case APIRunningState.CLOSED:
+                        this.log.info(`worker ${i} is already closed, nothing changed.`);
+                        break;
+                    default:
+                        throw new Error("unknown running state code.");
+                }
+            }
+        }
+
+        const api = this.api;
+        switch (api.runningState) {
+            case APIRunningState.NONE:
+                throw new Error(`api service hasn't prepared, cannot be stop.`);
+            case APIRunningState.PREPARED:
+                this.log.warn(`api service is in prepared but not running, nothing changed.`);
+                break;
+            case APIRunningState.STARTING:
+                if (await api.close()) {
+                    this.log.info(`api service is closed at starting procedure.`);
+                } else {
+                    this.log.warn(`close api service in starting procedure failed.`);
+                }
+                break;
+            case APIRunningState.RUNNING:
+                if (await api.close()) {
+                    this.log.info(`api service is closed at running procedure.`);
+                } else {
+                    this.log.error(`close api service in running procedure failed.`);
+                }
+                break;
+            case APIRunningState.CLOSING:
+                this.log.warn(`api service is already at closing procedure, nothing changed.`);
+                break;
+            case APIRunningState.CLOSED:
+                this.log.info(`api service is already closed, nothing changed.`);
+                break;
+            default:
+                throw new Error("unknown running state code.");
+        }
+
+        for (let i in driverFactory.instances) {
+            const driverAdaptor = driverFactory.instances[i].object;
+            if (driverAdaptor.onClose) {
+                await driverAdaptor.onClose();
             }
         }
     }

@@ -1,5 +1,6 @@
 import * as Consul from "consul";
-import {Driver, IDriver, turtle} from "../../";
+import {Driver, IDriverAdaptor, turtle} from "../../";
+import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
     tags?: string[];
@@ -12,11 +13,13 @@ export interface IConsulConf {
 }
 
 @Driver("discover/consul")
-export class DiscoverConsulDriver implements IDriver<IConsulConf, any> {
+export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     public static inst: DiscoverConsulDriver;
 
     protected consul: Consul.Consul;
+
+    protected conf: IConsulConf;
 
     constructor() {
         DiscoverConsulDriver.inst = this;
@@ -37,40 +40,55 @@ export class DiscoverConsulDriver implements IDriver<IConsulConf, any> {
     }
 
     async init(conf: IConsulConf): Promise<any> {
+        this.conf = conf;
+        return this.loadConsul();
+    }
 
-        const consul = this.loadConsul();
-
+    async onStart(){
         const exist = await this.exist();
         if (exist) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
         }
 
         const check = {
-            http: `http://localhost:${turtle.conf.port}/${conf.health.api}`,
-            interval: conf.health.interval || "5s",
-            notes: conf.health.notes,
-            status: conf.health.status
+            http: `http://localhost:${turtle.conf.port}/${this.conf.health.api}`,
+            interval: this.conf.health.interval || "5s",
+            notes: this.conf.health.notes,
+            status: this.conf.health.status
         };
 
-        consul.agent.service.register({
+        await this.register({
                 id: `${turtle.conf.name}:${turtle.conf.id}`,
                 name: turtle.conf.name,
-                tags: conf.tags,
+                tags: this.conf.tags,
                 check
-            },
-            (err) => {
-                if (err) {
-                    throw err;
-                }
-            }
-        );
+            });
+    }
 
-
-        return consul;
+    async onClose(){
+        await this.deregister(this.id);
     }
 
     get id() {
         return `${turtle.conf.name}:${turtle.conf.id}`;
+    }
+
+    async register(opts: Service.RegisterOptions){
+        return await new Promise((resolve, reject) => this.consul.agent.service.register(opts, (err, result) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        }));
+    }
+
+    async deregister(serviceId: string){
+        return await new Promise((resolve, reject) => this.consul.agent.service.deregister(serviceId, (err, result) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        }));
     }
 
     async serviceList(): Promise<{ [key: string]: any }> {

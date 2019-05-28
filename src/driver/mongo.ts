@@ -1,4 +1,4 @@
-import {Driver, IDriver} from "../core";
+import {Driver, IDriverAdaptor} from "../core";
 
 export interface IMongoConf {
     host: string;
@@ -9,7 +9,7 @@ export interface IMongoConf {
 }
 
 @Driver("mongo")
-export class MongoDriver implements IDriver<IMongoConf, any> {
+export class MongoDriver implements IDriverAdaptor<IMongoConf, any> {
 
     protected mongoose: any;
 
