@@ -1,5 +1,5 @@
 import * as Consul from "consul";
-import {Driver, IDriverAdaptor, turtle} from "../../";
+import {createHttpClient, Driver, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
@@ -44,7 +44,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return this.loadConsul();
     }
 
-    async onStart(){
+    async onStart() {
         const exist = await this.exist();
         if (exist) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
@@ -58,14 +58,16 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         };
 
         await this.register({
-                id: `${turtle.conf.name}:${turtle.conf.id}`,
-                name: turtle.conf.name,
-                tags: this.conf.tags,
-                check
-            });
+            id: `${turtle.conf.name}:${turtle.conf.id}`,
+            name: turtle.conf.name,
+            tags: this.conf.tags,
+            address: turtle.runtime.ip,
+            port: turtle.runtime.port,
+            check
+        });
     }
 
-    async onClose(){
+    async onClose() {
         await this.deregister(this.id);
     }
 
@@ -73,7 +75,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return `${turtle.conf.name}:${turtle.conf.id}`;
     }
 
-    async register(opts: Service.RegisterOptions){
+    async register(opts: Service.RegisterOptions) {
         return await new Promise((resolve, reject) => this.consul.agent.service.register(opts, (err, result) => {
             if (err) {
                 reject(err);
@@ -82,7 +84,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }));
     }
 
-    async deregister(serviceId: string){
+    async deregister(serviceId: string) {
         return await new Promise((resolve, reject) => this.consul.agent.service.deregister(serviceId, (err, result) => {
             if (err) {
                 reject(err);
@@ -91,13 +93,30 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }));
     }
 
-    async serviceList(): Promise<{ [key: string]: any }> {
-        return await new Promise((resolve, reject) => this.consul.agent.service.list((err, result) => {
+    async httpClient(serviceName: string) { // todo: cache
+        const services = Object.values(this.serviceList(serviceName));
+        const service = services[Math.floor(Math.random() * services.length)];
+        return createHttpClient(`http://${service.address}:${service.port}`);
+    }
+
+    async serviceList(serviceName?: string): Promise<{ [key: string]: any }> { // todo: cache
+        const services: any = await new Promise((resolve, reject) => this.consul.agent.service.list((err, result) => {
             if (err) {
                 reject(err);
             }
             resolve(result);
         }));
+        if (!serviceName) {
+            return services;
+        }
+        const ret: any = {}
+        for (const key in services) { // todo: imp this
+            const service = services[key];
+            if (service.Service === serviceName) {
+                ret[key] = service;
+            }
+        }
+        return ret;
     }
 
     async checkList(): Promise<{ [key: string]: any }> {

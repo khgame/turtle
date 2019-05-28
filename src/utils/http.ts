@@ -1,23 +1,24 @@
 import axios, {AxiosInstance} from "axios";
 import {turtle} from "../turtle";
 
-let axiosInstance: AxiosInstance;
+export function createHttpClient(baseURL: string = "", timeout: number = 17000) {
+    return axios.create({
+        baseURL,
+        timeout,
+        responseType: "json",
+        headers: {
+            "svr_name":  turtle.conf.name,
+            "svr_id":  turtle.conf.id,
+            "Content-Type": "application/json",
+        },
+    });
+}
 
+
+let axiosInstance: AxiosInstance;
 export const http = () => {
     if (!axiosInstance) {
-        axiosInstance = axios.create({
-            baseURL: "",
-            // headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            // withCredentials: true,
-            responseType: "json", // default
-            timeout: 30000,
-            headers: {
-                "svr_name":  turtle.conf.name,
-                "svr_id":  turtle.conf.id,
-                "Content-Type": "application/json",
-            },
-        });
-
+        axiosInstance = createHttpClient();
         axiosInstance.interceptors.request.use((config) => {
             // console.log('$http', config)
             return config;
