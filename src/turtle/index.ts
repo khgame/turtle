@@ -6,8 +6,8 @@ import {EventEmitter} from "events";
 import {APIRunningState, IApi, IWorker} from "../api";
 import {exitLog, genLogger, Logger} from "../utils";
 import {timeoutPromise} from "kht/lib";
-import {listenCommands} from "./commands";
 import * as getPort from "get-port";
+import {Runtime} from "./runtime";
 
 export class Turtle<IDrivers> {
 
@@ -19,6 +19,8 @@ export class Turtle<IDrivers> {
     }
 
     protected _log: Logger;
+
+    protected runtime: Runtime;
 
     public conf: IConf;
 
@@ -127,6 +129,7 @@ export class Turtle<IDrivers> {
             default:
                 throw new Error("unknown running state code.");
         }
+        this.runtime.setProcessInfo(port);
         this.api = api;
     }
 
@@ -195,7 +198,7 @@ export class Turtle<IDrivers> {
         process.on("SIGTERM", () => exit("SIGTERM"));
         process.on("SIGINT", () => exit("SIGINT"));
 
-        await listenCommands();
+        await this.runtime.listenCommands();
 
         for (let i in driverFactory.instances) {
             const driverAdaptor = driverFactory.instances[i].object;
