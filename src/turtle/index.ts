@@ -1,7 +1,7 @@
 import * as fs from "fs-extra";
 import * as Path from "path";
 import {driverFactory, InitDrivers} from "../core";
-import {IConf} from "../conf/interfece";
+import {IConf, ISetting} from "../conf/interfece";
 import {EventEmitter} from "events";
 import {APIRunningState, IApi, IWorker} from "../api";
 import {exitLog, genLogger, Logger} from "../utils";
@@ -26,6 +26,10 @@ export class Turtle<IDrivers> {
 
     public rules<TRules>(): TRules {
         return this.conf.rules as TRules;
+    }
+
+    public get setting(): ISetting {
+        return this.conf.setting || {};
     }
 
     public confPath: any;

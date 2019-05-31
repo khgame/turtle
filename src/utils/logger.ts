@@ -1,10 +1,19 @@
 import * as fs from "fs-extra";
 import * as path from "path";
-import {createLogger, format, transports} from "winston";
+import {createLogger, format, Logger, transports} from "winston";
 import * as DailyRotateFile from "winston-daily-rotate-file";
 import {turtle} from "../turtle";
 
 export {Logger} from "winston";
+
+enum NPM_LOGGING_LEVELS {
+    error = "error",
+    warn = "warn",
+    info = "info",
+    verbose = "verbose",
+    debug = "debug",
+    silly = "silly"
+}
 
 function ensureLogDir(folder?: string): string {
     let logDir: string = "logs";
@@ -18,11 +27,6 @@ function ensureLogDir(folder?: string): string {
 }
 
 const fileTransports: any[] = [];
-
-function logLevel() : string{
-    const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
-    return inDev ? "debug" : "info";
-}
 
 function createFileTransport(label: string, options?: {
     prefix?: string
@@ -41,7 +45,7 @@ function createFileTransport(label: string, options?: {
         ((options && options.prefix) ? `[${options.prefix.replace(/[:,&|]/g, "-")}]` : "+") +
         `${turtle.conf.name}#${turtle.conf.id}@${turtle.conf.port}`);
     const transport = new DailyRotateFile({
-        level: logLevel(),
+        level: NPM_LOGGING_LEVELS.debug,
         filename: path.resolve(logDir, fileName),
         datePattern: "YYYY-MM-DD",
         zippedArchive: (options && options.zippedArchive) || true,
@@ -55,13 +59,31 @@ function createFileTransport(label: string, options?: {
 
 const loggers: any = {};
 
-export const genLogger = (label: string = "") => { // development debug
+
+/**
+ * create logger
+ *
+ * @desc
+ * rules:
+ * - env development:
+ *  - basic level: silly
+ *  - console level: silly
+ *  - file level: debug
+ * - env production:
+ *  - basic level: silly
+ *  - console level: turtle.setting.log_prod_console or warn
+ *  - file level: info
+ * @param {string} label - logging label, format:
+ * @return {Logger} = the logger
+ */
+export function genLogger (label: string = ""): Logger { // development debug
     if (loggers[label]) {
         return loggers[label];
     }
+    const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
     const t = [
         new transports.Console({
-            level: logLevel(),
+            level: inDev ? NPM_LOGGING_LEVELS.silly : (turtle.setting.log_prod_console || NPM_LOGGING_LEVELS.warn),
             format: format.combine(
                 format.colorize(),
                 format.printf((info) =>
@@ -76,7 +98,7 @@ export const genLogger = (label: string = "") => { // development debug
 
     loggers[label] = createLogger({
         // change level if in dev environment versus production
-        level: logLevel(),
+        level: NPM_LOGGING_LEVELS.silly,
         format: format.combine(
             format.timestamp({
                 format: "YYYY-MM-DD HH:mm:ss.SSS",
@@ -86,7 +108,7 @@ export const genLogger = (label: string = "") => { // development debug
         transports: t,
     });
     return loggers[label];
-};
+}
 
 export async function exitLog() {
     genLogger().info(`★★ flush and shutdown all file loggers (${fileTransports.length}) ★★`);
