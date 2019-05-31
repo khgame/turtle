@@ -44,8 +44,10 @@ function createFileTransport(label: string, options?: {
     const logDir = ensureLogDir(
         ((options && options.prefix) ? `[${options.prefix.replace(/[:,&|]/g, "-")}]` : "+") +
         `${turtle.conf.name}#${turtle.conf.id}@${turtle.conf.port}`);
+    const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
+
     const transport = new DailyRotateFile({
-        level: NPM_LOGGING_LEVELS.debug,
+        level: inDev ? NPM_LOGGING_LEVELS.debug : (turtle.setting.log_prod_file || NPM_LOGGING_LEVELS.debug),
         filename: path.resolve(logDir, fileName),
         datePattern: "YYYY-MM-DD",
         zippedArchive: (options && options.zippedArchive) || true,
