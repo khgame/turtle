@@ -13,6 +13,8 @@ import {driverFactory} from "../core/driver/driverFactory";
 
 export class Turtle<IDrivers> {
 
+    protected initialed: boolean;
+
     protected get log(): Logger {
         if (this._log) {
             return this._log;
@@ -94,6 +96,28 @@ export class Turtle<IDrivers> {
         console.log("DRIVERS INITIALED");
     }
 
+    protected async tryInitial() {
+        if (this.initialed) {
+            return;
+        }
+
+        const exit = async (sig: any) => {
+            this.log.info(`★★ SIG ${sig} received, please hold ★★`);
+            await this.closeAll();
+            this.log.info(`★★ process exited ★★`);
+            await timeoutPromise(5000, exitLog());
+            process.exit(0);
+        };
+
+        process.on("SIGTERM", () => exit("SIGTERM"));
+        process.on("SIGINT", () => exit("SIGINT"));
+
+        await this.runtime.listenCommands();
+
+        this.initialed = true;
+    }
+
+
     protected async startApi(api: IApi) {
         let port: number;
         if (!turtle.conf.port) {
@@ -141,6 +165,10 @@ export class Turtle<IDrivers> {
     }
 
     protected async startWorkers(workers: IWorker[]) {
+        if (!this.workers) {
+            this.log.info(`there no workers to start.`);
+            return;
+        }
         // todo
         // let ports: number[];
         // if (turtle.conf.port instanceof Array) {
@@ -190,24 +218,11 @@ export class Turtle<IDrivers> {
     }
 
     public async startAll(api: IApi, workers?: IWorker[]) {
+        await this.tryInitial();
         await this.startApi(api);
-        if (workers) {
-            await this.startWorkers(workers);
-        }
-
-        const exit = async (sig: any) => {
-            this.log.info(`★★ SIG ${sig} received, please hold ★★`);
-            await this.closeAll();
-            this.log.info(`★★ process exited ★★`);
-            await timeoutPromise(5000, exitLog());
-            process.exit(0);
-        };
-
-        process.on("SIGTERM", () => exit("SIGTERM"));
-        process.on("SIGINT", () => exit("SIGINT"));
-
-        await this.runtime.listenCommands();
+        await this.startWorkers(workers);
     }
+
 
     public async closeApi() {
         const api = this.api;
