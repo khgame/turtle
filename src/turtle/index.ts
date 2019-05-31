@@ -1,6 +1,6 @@
 import * as fs from "fs-extra";
 import * as Path from "path";
-import {driverFactory, InitDrivers} from "../core";
+import {driverFactory, InitDrivers} from "../core/driver/driver";
 import {IConf, ISetting} from "../conf/interfece";
 import {EventEmitter} from "events";
 import {APIRunningState, IApi, IWorker} from "../api";
