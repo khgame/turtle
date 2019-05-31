@@ -45,7 +45,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return this.loadConsul();
     }
 
-    async onStart() {
+    async onApiStart() {
         const exist = await this.exist();
         if (exist) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
@@ -68,7 +68,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         });
     }
 
-    async onClose() {
+    async onApiClose() {
         await this.deregister(this.id);
     }
 

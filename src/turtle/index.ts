@@ -1,6 +1,6 @@
 import * as fs from "fs-extra";
 import * as Path from "path";
-import {driverFactory, InitDrivers} from "../core/driver/driver";
+
 import {IConf, ISetting} from "../conf/interfece";
 import {EventEmitter} from "events";
 import {APIRunningState, IApi, IWorker} from "../api";
@@ -8,6 +8,8 @@ import {exitLog, genLogger, Logger} from "../utils";
 import {timeoutPromise} from "kht/lib";
 import * as getPort from "get-port";
 import {Runtime} from "./runtime";
+
+import {driverFactory} from "../core/driver/driverFactory";
 
 export class Turtle<IDrivers> {
 
@@ -81,7 +83,7 @@ export class Turtle<IDrivers> {
     }
 
     public async initialDrivers(drivers: Array<string | Function>, cb?: (e: EventEmitter) => void) {
-        const results = await InitDrivers(this.conf.drivers, drivers, cb);
+        const results = await driverFactory.initAll(this.conf.drivers, drivers, cb);
         try {
             this._drivers = this._drivers ? {...this._drivers, ...results} : results; // override
         }
@@ -135,9 +137,11 @@ export class Turtle<IDrivers> {
         }
         this.runtime.setProcessInfo(port);
         this.api = api;
+        await driverFactory.triggerApiStart();
     }
 
     protected async startWorkers(workers: IWorker[]) {
+        // todo
         // let ports: number[];
         // if (turtle.conf.port instanceof Array) {
         //     ports = turtle.conf.port;
@@ -203,51 +207,9 @@ export class Turtle<IDrivers> {
         process.on("SIGINT", () => exit("SIGINT"));
 
         await this.runtime.listenCommands();
-
-        for (let i in driverFactory.instances) {
-            const driverAdaptor = driverFactory.instances[i].object;
-            if (driverAdaptor.onStart) {
-                await driverAdaptor.onStart();
-            }
-        }
     }
 
-    public async closeAll() {
-        if (this.workers) {
-            for (const i in this.workers) {
-                const worker = this.workers[i];
-                switch (worker.runningState) {
-                    case APIRunningState.NONE:
-                        throw new Error(`worker ${i} hasn't prepared, cannot be stop.`);
-                    case APIRunningState.PREPARED:
-                        this.log.warn(`worker ${i} is in prepared but not running, nothing changed.`);
-                        break;
-                    case APIRunningState.STARTING:
-                        if (await worker.close()) {
-                            this.log.info(`worker ${i} is closed at starting procedure.`);
-                        } else {
-                            this.log.warn(`close worker ${i} in starting procedure failed.`);
-                        }
-                        break;
-                    case APIRunningState.RUNNING:
-                        if (await worker.close()) {
-                            this.log.info(`worker ${i} is closed at running procedure.`);
-                        } else {
-                            this.log.error(`close worker ${i} in running procedure failed.`);
-                        }
-                        break;
-                    case APIRunningState.CLOSING:
-                        this.log.warn(`worker ${i} is already at closing procedure, nothing changed.`);
-                        break;
-                    case APIRunningState.CLOSED:
-                        this.log.info(`worker ${i} is already closed, nothing changed.`);
-                        break;
-                    default:
-                        throw new Error("unknown running state code.");
-                }
-            }
-        }
-
+    public async closeApi() {
         const api = this.api;
         switch (api.runningState) {
             case APIRunningState.NONE:
@@ -278,13 +240,52 @@ export class Turtle<IDrivers> {
             default:
                 throw new Error("unknown running state code.");
         }
+        await driverFactory.triggerApiClose();
+    }
 
-        for (let i in driverFactory.instances) {
-            const driverAdaptor = driverFactory.instances[i].object;
-            if (driverAdaptor.onClose) {
-                await driverAdaptor.onClose();
+    public async closeWorker() {
+        if (!this.workers) {
+            this.log.info(`there no workers to close.`);
+            return;
+        }
+        for (const i in this.workers) {
+            const worker = this.workers[i];
+            switch (worker.runningState) {
+                case APIRunningState.NONE:
+                    throw new Error(`worker ${i} hasn't prepared, cannot be stop.`);
+                case APIRunningState.PREPARED:
+                    this.log.warn(`worker ${i} is in prepared but not running, nothing changed.`);
+                    break;
+                case APIRunningState.STARTING:
+                    if (await worker.close()) {
+                        this.log.info(`worker ${i} is closed at starting procedure.`);
+                    } else {
+                        this.log.warn(`close worker ${i} in starting procedure failed.`);
+                    }
+                    break;
+                case APIRunningState.RUNNING:
+                    if (await worker.close()) {
+                        this.log.info(`worker ${i} is closed at running procedure.`);
+                    } else {
+                        this.log.error(`close worker ${i} in running procedure failed.`);
+                    }
+                    break;
+                case APIRunningState.CLOSING:
+                    this.log.warn(`worker ${i} is already at closing procedure, nothing changed.`);
+                    break;
+                case APIRunningState.CLOSED:
+                    this.log.info(`worker ${i} is already closed, nothing changed.`);
+                    break;
+                default:
+                    throw new Error("unknown running state code.");
             }
         }
+        await driverFactory.triggerWorkerClose();
+    }
+
+    public async closeAll() {
+        await this.closeWorker();
+        await this.closeApi();
     }
 }
 
