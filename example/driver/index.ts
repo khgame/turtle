@@ -1,6 +1,6 @@
 import {turtle, ITurtleRedis, RedisDriver} from "../../src/";
 import * as Path from "path";
-import {Redis} from "ioredis";
+// import {Redis} from "ioredis";
 
 async function start() {
     /** 0. environment

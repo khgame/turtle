@@ -3,13 +3,14 @@ import * as Path from "path";
 
 import {IConf, ISetting} from "../conf/interfece";
 import {EventEmitter} from "events";
-import {APIRunningState, IApi, IWorker} from "../api";
+import {IApi, APIRunningState} from "../core/api";
 import {exitLog, genLogger, Logger} from "../utils";
 import {timeoutPromise} from "kht/lib";
 import * as getPort from "get-port";
 import {Runtime} from "./runtime";
 
 import {driverFactory} from "../core/driver/driverFactory";
+import {IWorker, WorkerRunningState} from "../core/worker";
 
 export class Turtle<IDrivers> {
 
@@ -184,25 +185,25 @@ export class Turtle<IDrivers> {
         //
         //     const api = this.apis[i];
         //     switch (api.runningState) {
-        //         case APIRunningState.NONE:
+        //         case ProcessRunningState.NONE:
         //             throw new Error(`api ${i} hasn't prepared, cannot be start.`);
-        //         case APIRunningState.PREPARED:
+        //         case ProcessRunningState.PREPARED:
         //             if (await api.start(ports[i])) {
         //                 this.log.info(`api ${i} started.`);
         //             } else {
         //                 this.log.error(`api ${i} cannot be start.`);
         //             }
         //             break;
-        //         case APIRunningState.STARTING:
+        //         case ProcessRunningState.STARTING:
         //             this.log.warn(`api ${i} is in starting procedure, nothing changed.`);
         //             break;
-        //         case APIRunningState.RUNNING:
+        //         case ProcessRunningState.RUNNING:
         //             this.log.warn(`api ${i} is already in running procedure, nothing changed.`);
         //             break;
-        //         case APIRunningState.CLOSING:
+        //         case ProcessRunningState.CLOSING:
         //             this.log.warn(`api ${i} is in closing procedure, nothing changed.`);
         //             break;
-        //         case APIRunningState.CLOSED:
+        //         case ProcessRunningState.CLOSED:
         //             this.log.info(`api ${i} is already closed, try restart.`);
         //             if (await api.start(ports[i])) {
         //                 this.log.info(`api ${i} restarted.`);
@@ -266,29 +267,29 @@ export class Turtle<IDrivers> {
         for (const i in this.workers) {
             const worker = this.workers[i];
             switch (worker.runningState) {
-                case APIRunningState.NONE:
+                case WorkerRunningState.NONE:
                     throw new Error(`worker ${i} hasn't prepared, cannot be stop.`);
-                case APIRunningState.PREPARED:
+                case WorkerRunningState.PREPARED:
                     this.log.warn(`worker ${i} is in prepared but not running, nothing changed.`);
                     break;
-                case APIRunningState.STARTING:
+                case WorkerRunningState.STARTING:
                     if (await worker.close()) {
                         this.log.info(`worker ${i} is closed at starting procedure.`);
                     } else {
                         this.log.warn(`close worker ${i} in starting procedure failed.`);
                     }
                     break;
-                case APIRunningState.RUNNING:
+                case WorkerRunningState.RUNNING:
                     if (await worker.close()) {
                         this.log.info(`worker ${i} is closed at running procedure.`);
                     } else {
                         this.log.error(`close worker ${i} in running procedure failed.`);
                     }
                     break;
-                case APIRunningState.CLOSING:
+                case WorkerRunningState.CLOSING:
                     this.log.warn(`worker ${i} is already at closing procedure, nothing changed.`);
                     break;
-                case APIRunningState.CLOSED:
+                case WorkerRunningState.CLOSED:
                     this.log.info(`worker ${i} is already closed, nothing changed.`);
                     break;
                 default:

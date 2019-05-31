@@ -7,24 +7,13 @@ export enum APIRunningState {
     CLOSED = 5
 }
 
-
 export interface IApi {
-    enabled: boolean;
     runningRequest: number;
 
+    enabled: boolean;
     runningState: APIRunningState;
 
     start(port: number) : Promise<boolean>;
     close() : Promise<boolean>;
 }
 
-
-export interface IWorker {
-    enabled: boolean;
-    runningRequest: number;
-
-    runningState: APIRunningState;
-
-    start(port: number) : Promise<boolean>;
-    close() : Promise<boolean>;
-}

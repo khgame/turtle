@@ -1,5 +1,5 @@
-import {CommandLineApp} from "../../src/cli/app";
-import {APIRunningState, IApi} from "../../src";
+import {CommandLineApp} from "../../src/cli";
+import {IApi, APIRunningState} from "../../src";
 
 class ApiClass implements IApi {
 
