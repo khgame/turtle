@@ -19,13 +19,18 @@ function ensureLogDir(folder?: string): string {
 
 const fileTransports: any[] = [];
 
+function logLevel() : string{
+    const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
+    return inDev ? "debug" : "info";
+}
+
 function createFileTransport(label: string, options?: {
     prefix?: string
     zippedArchive?: boolean,
     maxSize?: string,
     maxFiles?: string
 }) {
-    if (!turtle.conf){
+    if (!turtle.conf) {
         console.error(`create transport error, turtle's config haven't been set`);
     }
 
@@ -36,7 +41,7 @@ function createFileTransport(label: string, options?: {
         ((options && options.prefix) ? `[${options.prefix.replace(/[:,&|]/g, "-")}]` : "+") +
         `${turtle.conf.name}#${turtle.conf.id}@${turtle.conf.port}`);
     const transport = new DailyRotateFile({
-        level: "verbose",
+        level: logLevel(),
         filename: path.resolve(logDir, fileName),
         datePattern: "YYYY-MM-DD",
         zippedArchive: (options && options.zippedArchive) || true,
@@ -50,14 +55,13 @@ function createFileTransport(label: string, options?: {
 
 const loggers: any = {};
 
-export const genLogger = (label: string = "") => {
-    const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
+export const genLogger = (label: string = "") => { // development debug
     if (loggers[label]) {
         return loggers[label];
     }
     const t = [
         new transports.Console({
-            level: inDev ? "verbose" : "info",
+            level: logLevel(),
             format: format.combine(
                 format.colorize(),
                 format.printf((info) =>
@@ -70,18 +74,17 @@ export const genLogger = (label: string = "") => {
         t.push(createFileTransport("main"));
     }
 
-    createFileTransport(label),
-        loggers[label] = createLogger({
-            // change level if in dev environment versus production
-            level: inDev ? "debug" : "info",
-            format: format.combine(
-                format.timestamp({
-                    format: "YYYY-MM-DD HH:mm:ss.SSS",
-                }),
-                format.label({label})
-            ),
-            transports: t,
-        });
+    loggers[label] = createLogger({
+        // change level if in dev environment versus production
+        level: logLevel(),
+        format: format.combine(
+            format.timestamp({
+                format: "YYYY-MM-DD HH:mm:ss.SSS",
+            }),
+            format.label({label})
+        ),
+        transports: t,
+    });
     return loggers[label];
 };
 
