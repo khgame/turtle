@@ -3,6 +3,7 @@ import {createHttpClient, Driver, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
+    dc?: string;
     tags?: string[];
     health: {
         api: string
@@ -94,35 +95,50 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async httpClient(serviceName: string) { // todo: cache
-        const services = await this.serviceList(serviceName);
-        const servicesArr = Object.values(services).filter(s => s.Address && s.Port);
-        if (!servicesArr || servicesArr.length <= 0) {
-            console.log("error servicesArr", servicesArr);
-            return null; // todo: cache request?
-        }
-        const service = servicesArr[Math.floor(Math.random() * servicesArr.length)];
-        return createHttpClient(`http://${service.Address}:${service.Port}`);
+        const health: any = await new Promise((resolve, reject) =>
+            this.consul.health.service(serviceName, (err, result) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(result);
+            }));
+        // console.log("health", JSON.stringify(health, null, 4));
+        const services = health.map((h: any) => {
+            if (h.Checks.find((c: any) => c.Status !== "passing")) {
+                return;
+            }
+            const {ID, Address, Port} = h.Service;
+            return {ID, Address, Port};
+        }).filter((c: any) => c);
+        // console.log("services", services);
+        const service = services[Math.floor(services.length * Math.random())];
+        const client = createHttpClient(`http://${service.Address}:${service.Port}`);
+        return client;
     }
 
-    async serviceList(serviceName?: string): Promise<{ [key: string]: any }> { // todo: cache
-        const services: any = await new Promise((resolve, reject) => this.consul.agent.service.list((err, result) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(result);
-        }));
-        if (!serviceName) {
-            return services;
-        }
-        const ret: any = {};
-        for (const key in services) { // todo: imp this
-            const service = services[key];
-            if (service.Service === serviceName) {
-                ret[key] = service;
-            }
-        }
-        return ret;
+    async services() {
+        const services: any = await new Promise((resolve, reject) =>
+            this.consul.catalog.service.list((err, result) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(result);
+            }));
+        return services;
     }
+
+    async serviceNodes(serviceName: string): Promise<{ [key: string]: any }> { // todo: cache
+        const nodes: any = await new Promise((resolve, reject) =>
+            this.consul.catalog.service.nodes(serviceName, (err, result) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(result);
+            }));
+        console.log("=== nodes", nodes);
+        return nodes;
+    }
+
 
     async checkList(): Promise<{ [key: string]: any }> {
         return await new Promise((resolve, reject) => this.consul.agent.check.list((err, result) => {
@@ -133,21 +149,24 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }));
     }
 
-    async exist() {
-        const services = await this.serviceList();
+    async exist() { // todo
+        // const services = await this.serviceList();
         const checks = await this.checkList();
 
         const combinedId = this.id;
-        const service = services[combinedId];
-        if (!service) {
-            return false;
-        }
+        // const service = services[combinedId];
+        // if (!service) {
+        //     return false;
+        // }
 
-        const check = checks[`service:${combinedId}`];
-        if (!check) {
-            return true;
-        }
-        return check.Status === "passing";
+        // const check = checks[`service:${combinedId}`];
+        // if (!check) {
+        //     return true;
+        // }
+        // console.log("check", check);
+        // return check.Status === "passing";
+
+        return false;
     }
 }
 
