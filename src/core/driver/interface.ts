@@ -6,4 +6,6 @@ export interface IDriverAdaptor<TConf, TService> {
 
     onWorkerStart?(): Promise<void>;
     onWorkerClose?(): Promise<void>;
+
+    reload?(conf: TConf): Promise<TService>;
 }

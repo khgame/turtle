@@ -36,18 +36,18 @@ class DriverFactory {
         });
 
         /** convert all constructors to driver metas */
-        const driverMetas = driverMetaMgr.pickDrivers(constructors);
+        const driverMetas = driverMetaMgr.pickDriverMetas(constructors);
 
         /** initial all drivers */
-        const results: { [key: string]: any} = {};
+        const results: { [key: string]: any } = {};
         for (const i in driverMetas) {
-            const driver = driverMetas[i];
-            const key = driver.name;
+            const driverMeta = driverMetas[i];
+            const key = driverMeta.name;
             if (!config[key]) {
                 throw new Error(`config of driver ${key} are not exist`);
             }
 
-            const value = await this.initDriver(config[key], driver);
+            const value = await this.initDriver(config[key], driverMeta);
             ev.emit(key, value);
             results[key] = value;
         }
@@ -57,7 +57,32 @@ class DriverFactory {
         return results;
     }
 
-    async triggerApiStart(){
+    async reloadAll(config: any, cb?: (e: EventEmitter) => void) {
+        /** export event emitter */
+        const ev = new EventEmitter();
+        if (cb) {
+            cb(ev);
+        }
+
+        const results: { [key: string]: any } = {};
+        for (const i in this.factory.instances) {
+            const d = this.factory.instances[i];
+            const driverMeta = driverMetaMgr.pickDriverMeta(d.type);
+            const key = driverMeta.name;
+            if (!config[key]) {
+                throw new Error(`config of driver ${key} are not exist`);
+            }
+            await d.object.reload(config[key]);
+            ev.emit(key, d.object);
+            results[key] = d.object;
+        }
+
+        /** return drivers map */
+        console.log("drivers reloaded", Object.keys(results));
+        return results;
+    }
+
+    async triggerApiStart() {
         for (let i in this.factory.instances) {
             const driverAdaptor = this.factory.instances[i].object;
             if (driverAdaptor.onApiStart) {
@@ -66,7 +91,7 @@ class DriverFactory {
         }
     }
 
-    async triggerApiClose(){
+    async triggerApiClose() {
         for (let i in this.factory.instances) {
             const driverAdaptor = this.factory.instances[i].object;
             if (driverAdaptor.onApiClose) {
@@ -75,7 +100,7 @@ class DriverFactory {
         }
     }
 
-    async triggerWorkerStart(){
+    async triggerWorkerStart() {
         for (let i in this.factory.instances) {
             const driverAdaptor = this.factory.instances[i].object;
             if (driverAdaptor.onWorkerStart) {
@@ -84,7 +109,7 @@ class DriverFactory {
         }
     }
 
-    async triggerWorkerClose(){
+    async triggerWorkerClose() {
         for (let i in this.factory.instances) {
             const driverAdaptor = this.factory.instances[i].object;
             if (driverAdaptor.onWorkerClose) {
@@ -92,6 +117,7 @@ class DriverFactory {
             }
         }
     }
+
 }
 
 export const driverFactory = new DriverFactory();

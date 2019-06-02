@@ -97,24 +97,41 @@ export class Turtle<IDrivers> {
         console.log("DRIVERS INITIALED");
     }
 
+    public async reload(sig?: string) {
+        if (sig) {
+            this.log.info(`★★ SIG ${sig} received, please hold ★★`);
+        }else {
+            this.log.info(`★★ internal hup command received, please hold ★★`);
+        }
+        this.reloadConf();
+        await driverFactory.reloadAll(this.conf.drivers);
+    }
+
+    public async shutdown(sig?: string) {
+        try {
+            if (sig) {
+                this.log.info(`★★ SIG ${sig} received, please hold ★★`);
+            } else {
+                this.log.info(`★★ internal shutdown command received, please hold ★★`);
+            }
+            await this.closeAll();
+            this.log.info(`★★ process exited ★★`);
+            await timeoutPromise(5000, exitLog());
+            process.exit(0);
+        } catch (err) {
+            process.exit(1);
+        }
+    }
+
     protected async tryInitial() {
         if (this.initialed) {
             return;
         }
 
-        const exit = async (sig: any) => {
-            this.log.info(`★★ SIG ${sig} received, please hold ★★`);
-            await this.closeAll();
-            this.log.info(`★★ process exited ★★`);
-            await timeoutPromise(5000, exitLog());
-            process.exit(0);
-        };
-
-        process.on("SIGTERM", () => exit("SIGTERM"));
-        process.on("SIGINT", () => exit("SIGINT"));
-
+        process.on("SIGTERM", () => this.shutdown("SIGTERM"));
+        process.on("SIGINT", () => this.shutdown("SIGINT"));
+        process.on("SIGHUP", () => this.reload("SIGHUP"));
         await this.runtime.listenCommands();
-
         this.initialed = true;
     }
 

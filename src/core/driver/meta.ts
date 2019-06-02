@@ -6,7 +6,11 @@ export interface IDriverMetadata {
 export class DriverMetaMgr {
     driverMetas: IDriverMetadata[] = [];
 
-    pickDrivers(constructors: Function[]): IDriverMetadata[] {
+    pickDriverMeta(constructors: Function): IDriverMetadata {
+        return this.driverMetas.find(dm => constructors === dm.target);
+    }
+
+    pickDriverMetas(constructors: Function[]): IDriverMetadata[] {
         return this.driverMetas.filter(dm => constructors.indexOf(dm.target) > -1);
     }
 
