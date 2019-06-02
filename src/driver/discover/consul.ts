@@ -3,14 +3,20 @@ import {createHttpClient, Driver, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
+    options?: {
+        host?: string; // (String, default: 127.0.0.1): agent address
+        port?: number; //  (Integer, default: 8500): agent HTTP(S) port
+        secure?: boolean; // (Boolean, default: false): enable HTTPS
+        ca?: string[];
+    };
+    health: {
+        api: string;
+        interval?: string;
+        notes?: string;
+        status?: string;
+    };
     dc?: string;
     tags?: string[];
-    health: {
-        api: string
-        interval?: string
-        notes?: string
-        status?: string
-    };
 }
 
 @Driver("discover/consul")
@@ -32,7 +38,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }
         if (!this.consul) {
             try {
-                this.consul = require("consul")();
+                this.consul = require("consul")(this.conf.options);
             } catch (e) {
                 throw new Error("consul package was not found installed. Try to install it: npm install consul --save");
             }
