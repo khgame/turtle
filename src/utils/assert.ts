@@ -5,10 +5,13 @@ type StringMethod = () => string;
 
 export class Assert {
 
-    public log: Logger;
+    protected _log: Logger;
+
+    public get log(): Logger {
+        return this._log || (this._log = genLogger(this.prefix));
+    }
 
     constructor(public prefix: string) {
-        this.log = genLogger(prefix);
     }
 
     ok<T>(condition: T, msg: string | Error | StringMethod) {
