@@ -3,7 +3,15 @@
   "version": "0.0.18",
   "description": "An enterprise level javascript/typescript server framework.",
   "keywords": [
-    "web", "application", "microservice", "distributed", "cluster", "middleware", "driver", "plugin", "framework"
+    "web",
+    "application",
+    "microservice",
+    "distributed",
+    "cluster",
+    "middleware",
+    "driver",
+    "plugin",
+    "framework"
   ],
   "main": "lib/index.js",
   "scripts": {
@@ -43,6 +51,7 @@
     "ip": "^1.1.5",
     "kht": "^0.0.9",
     "md5": "^2.2.1",
+    "node-cache": "^4.2.0",
     "path": "^0.12.7",
     "sha3": "^2.0.4",
     "typedi": "^0.8.0",

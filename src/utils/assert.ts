@@ -18,9 +18,11 @@ export class Assert {
         if (condition instanceof Promise) {
             throw new Error("assert condition cannot be a promise");
         }
-        else if (condition) {
+
+        if (condition) {
             return;
         }
+
         let msgStr: string = "";
         if (typeof msg === "string") {
             msgStr = msg;
