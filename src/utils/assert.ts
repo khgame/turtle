@@ -15,16 +15,19 @@ export class Assert {
     }
 
     ok<T>(condition: T, msg: string | Error | StringMethod) {
-        if (condition) {
+        if (condition instanceof Promise) {
+            throw new Error("assert condition cannot be a promise");
+        }
+        else if (condition) {
             return;
         }
         let msgStr: string = "";
-        if (typeof msg === "string"){
+        if (typeof msg === "string") {
             msgStr = msg;
             msg = new Error(msgStr);
         } else if (msg instanceof Error) {
             msgStr = (msg as Error).message;
-        } else{
+        } else {
             msgStr = (msg as StringMethod)();
             msg = new Error(msgStr);
         }
