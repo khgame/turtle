@@ -12,6 +12,8 @@ export class Runtime {
     public ip: string;
     public pid: number;
     public cwd: string;
+    public node_env: string;
+    public pkg_version: string;
 
     async listenCommands() {
         const port = await getPort({port: getPort.makeRange(13000, 13100)});
@@ -31,6 +33,8 @@ export class Runtime {
         this.port = port;
         this.pid = process.pid;
         this.cwd = process.cwd();
+        this.node_env = process.env.NODE_ENV;
+        this.pkg_version = process.env.npm_package_version;
         this.save();
     }
 
