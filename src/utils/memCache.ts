@@ -1,7 +1,7 @@
 import * as NodeCache from "node-cache";
 
 export interface IMemCache extends NodeCache {
-    lock(key: string, ttl: number): boolean;
+    lock(key: string, ttl?: number): boolean;
     unlock(key: string): boolean;
 }
 
@@ -13,7 +13,7 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
         if (cache.get(key) !== undefined) {
             return false;
         }
-        return ttl ? cache.set(key, "", ttl) : cache.set(key, "");
+        return ttl > 0 ? cache.set(key, "", ttl) : cache.set(key, "");
     };
 
     ret.unlock = (key: string) => {
@@ -22,3 +22,5 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
 
     return ret as IMemCache;
 }
+
+export const memMutex = genMemCache();
