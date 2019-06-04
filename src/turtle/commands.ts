@@ -6,7 +6,17 @@ export class CommandsAPI {
 
     @Method()
     async reload() {
-        turtle.reloadConf();
+        await turtle.reload();
+    }
+
+    @Method()
+    async shutdown() {
+        await turtle.shutdown();
+    }
+
+    @Method()
+    async runtime() {
+        await turtle.runtime;
     }
 }
 
