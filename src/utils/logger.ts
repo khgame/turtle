@@ -28,12 +28,14 @@ function ensureLogDir(folder?: string): string {
 
 const fileTransports: any[] = [];
 
-function createFileTransport(label: string, options?: {
-    prefix?: string
-    zippedArchive?: boolean,
-    maxSize?: string,
-    maxFiles?: string
-}) {
+export interface IFileTransportOption {
+    prefix?: string;
+    zippedArchive?: boolean;
+    maxSize?: string;
+    maxFiles?: string;
+}
+
+function createFileTransport(label: string, options?: IFileTransportOption) {
     if (!turtle.conf) {
         console.error(`create transport error, turtle's config haven't been set`);
     }
@@ -76,9 +78,10 @@ const loggers: any = {};
  *  - console level: turtle.setting.log_prod_console or warn
  *  - file level: info
  * @param {string} label - logging label, format:
+ * @param options
  * @return {Logger} = the logger
  */
-export function genLogger (label: string = ""): Logger { // development debug
+export function genLogger(label: string = "", options?: IFileTransportOption ): Logger { // development debug
     if (loggers[label]) {
         return loggers[label];
     }
@@ -92,7 +95,7 @@ export function genLogger (label: string = ""): Logger { // development debug
                     `[${info.timestamp}] [${info.level}] [${info.label || "*"}]: ${info.message}`),
             ),
         }),
-        createFileTransport(label)
+        createFileTransport(label, options)
     ];
     if (label && label !== "main" && !label.startsWith("main:") && !label.startsWith(":")) {
         t.push(createFileTransport("main"));
