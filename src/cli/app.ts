@@ -100,7 +100,9 @@ config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
             .action((options) => {
                 let extractPath = (options && options.path) || `./${this.defaultConfName}`;
                 extractPath = Path.isAbsolute(extractPath) ? extractPath : Path.resolve(process.cwd(), extractPath);
-                fs.writeJSONSync(extractPath, this.defaultConf);
+                fs.writeJSONSync(extractPath, this.defaultConf, {
+                    spaces: 4
+                });
                 process.exit(0);
             });
 
