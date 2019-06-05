@@ -3,6 +3,9 @@ import * as NodeCache from "node-cache";
 export interface IMemCache extends NodeCache {
     lock(key: string, ttl?: number): boolean;
     unlock(key: string): boolean;
+
+    lockMany(keys: string[], ttl: number): boolean; // must ttl
+    unlockMany(keys: string[]): boolean;
 }
 
 export function genMemCache(options?: NodeCache.Options): IMemCache {
@@ -18,6 +21,22 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
 
     ret.unlock = (key: string) => {
         return cache.del(key) === 1;
+    };
+
+    ret.lockMany = (keys: string[], ttl: number) => {
+        if (ttl <= 0){
+            throw new Error("ttl must be set when lock many");
+        }
+        if (Object.keys(cache.mget(keys)).length > 0) {
+            return false;
+        }
+        keys.forEach(key => cache.set(key, "", ttl));
+        return true;
+    };
+
+    ret.unlockMany = (keys: string[]) => {
+        keys.forEach(key => cache.del(key));
+        return true;
     };
 
     return ret as IMemCache;
