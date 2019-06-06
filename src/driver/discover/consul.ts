@@ -1,8 +1,9 @@
 import * as Consul from "consul";
-import {createHttpClient, Driver, IDriverAdaptor, turtle} from "../../";
+import {createHttpClient, Driver, genLogger, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
+    optional?: boolean; // default true
     options?: {
         host?: string; // (String, default: 127.0.0.1): agent address
         port?: number; //  (Integer, default: 8500): agent HTTP(S) port
@@ -27,6 +28,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     protected consul: Consul.Consul;
 
     protected conf: IConsulConf;
+
+    protected log = genLogger();
 
     constructor() {
         DiscoverConsulDriver.inst = this;
@@ -88,7 +91,12 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                 reject(err);
             }
             resolve(result);
-        }));
+        })).catch(ex => {
+            this.log.error(`register driver discover/consul failed : ${ex}`);
+            if (!this.conf.optional) {
+                throw ex;
+            }
+        });
     }
 
     async deregister(serviceId: string) {
@@ -97,7 +105,12 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                 reject(err);
             }
             resolve(result);
-        }));
+        })).catch(ex => {
+            this.log.error(`deregister driver discover/consul failed : ${ex}`);
+            if (!this.conf.optional) {
+                throw ex;
+            }
+        });
     }
 
     async httpClient(serviceName: string) { // todo: cache
