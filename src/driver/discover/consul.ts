@@ -128,9 +128,9 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return `${turtle.conf.name}:${turtle.conf.id}`;
     }
 
-    async createServiceId() {
+    async createServiceDID() {
         this.assert.ok(this.consul, `cannot reach the consul agent`);
-        const key = "service_id";
+        const key = "service_did";
         let result = false;
         let newValue = 1;
         while (!result) {
