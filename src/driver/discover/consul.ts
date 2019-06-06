@@ -1,5 +1,5 @@
 import * as Consul from "consul";
-import {createHttpClient, Driver, genLogger, IDriverAdaptor, turtle} from "../../";
+import {createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
@@ -30,20 +30,42 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     protected conf: IConsulConf;
 
     protected log = genLogger();
+    protected assert = genAssert();
 
     constructor() {
         DiscoverConsulDriver.inst = this;
     }
 
-    protected loadConsul() {
+    protected async loadConsul() {
         if (!require) {
             throw new Error("Cannot load consul. Try to install all required dependencies.");
         }
         if (!this.consul) {
+            let check;
+
+            this.log.silly(`try connect to consul agent ${JSON.stringify(this.conf)}`, );
+            const options = this.conf.options || {};
+            const url = `${options.secure ? "https" : "http"}://${options.host || "127.0.0.1"}:${options.port || "8500"}/v1/agent/self`;
             try {
-                this.consul = require("consul")(this.conf.options);
+                check = await http().get(url);
+                console.log("check", check);
             } catch (e) {
-                throw new Error("consul package was not found installed. Try to install it: npm install consul --save");
+                check = false;
+                this.log.warn(`touch consul error: ${e.message}`);
+            }
+
+            if (check) {
+                try {
+                    this.consul = require("consul")(this.conf.options);
+                } catch (e) {
+                    throw new Error("consul package was not found installed. Try to install it: npm install consul --save");
+                }
+            } else {
+                if (!this.conf.optional) {
+                    throw new Error(`cannot reach the consul agent, and the optional tag is off ${this.conf.optional}`);
+                } else {
+                    this.log.warn(`cannot reach the consul agent, and the optional tag is open`);
+                }
             }
         }
         return this.consul;
@@ -51,10 +73,19 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     async init(conf: IConsulConf): Promise<any> {
         this.conf = conf;
-        return this.loadConsul();
+        return await this.loadConsul();
     }
 
     async onApiStart() {
+        if (!this.consul) {
+            if (this.conf.optional) {
+                this.log.warn(`onApiStart is skipped, optional consul is unreachable.`);
+                return;
+            } else {
+                throw new Error(`onApiStart: cannot reach the consul agent`);
+            }
+        }
+
         const exist = await this.exist();
         if (exist) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
@@ -67,7 +98,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             status: this.conf.health.status
         };
 
-        await this.register({
+        // console.log("reg optional", this.conf.optional);
+        const regResult = await this.register({
             id: `${turtle.conf.name}:${turtle.conf.id}`,
             name: turtle.conf.name,
             tags: this.conf.tags,
@@ -75,9 +107,20 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             port: turtle.runtime.port,
             check
         });
+
+        // console.log("regResult", regResult);
     }
 
     async onApiClose() {
+        if (!this.consul) {
+            if (this.conf.optional) {
+                this.log.warn(`onApiClose is skipped, optional consul is unreachable.`);
+                return;
+            } else {
+                throw new Error(`onApiClose: cannot reach the consul agent`);
+            }
+        }
+
         await this.deregister(this.id);
     }
 
@@ -86,6 +129,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async createServiceId() {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const key = "service_id";
         let result = false;
         let newValue = 1;
@@ -116,6 +160,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         CreateIndex: number,
         ModifyIndex: number
     }> {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const val: any = await new Promise((resolve, reject) => this.consul.kv.get(key, (err, result) => {
             if (err) {
                 reject(err);
@@ -127,6 +172,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async set(key: string, val: string) {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const ret = await new Promise((resolve, reject) => this.consul.kv.set(key, val, (err, result) => {
             if (err) {
                 reject(err);
@@ -137,6 +183,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async cas(key: string, value: string, modifyIndex: string): Promise<any> {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const opt = {
             key, value, cas: modifyIndex
         };
@@ -151,6 +198,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
 
     async register(opts: Service.RegisterOptions) {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         return await new Promise((resolve, reject) => this.consul.agent.service.register(opts, (err, result) => {
             if (err) {
                 reject(err);
@@ -165,13 +213,17 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async deregister(serviceId: string) {
+        if (!this.consul && this.conf.optional){
+            return;
+        }
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         return await new Promise((resolve, reject) => this.consul.agent.service.deregister(serviceId, (err, result) => {
             if (err) {
                 reject(err);
             }
             resolve(result);
         })).catch(ex => {
-            this.log.error(`deregister driver discover/consul failed : ${ex}`);
+            // this.log.error(`deregister driver discover/consul failed : ${ex}`);
             if (!this.conf.optional) {
                 throw ex;
             }
@@ -179,6 +231,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async httpClient(serviceName: string) { // todo: cache
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const health: any = await new Promise((resolve, reject) =>
             this.consul.health.service(serviceName, (err, result) => {
                 if (err) {
@@ -201,6 +254,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async services() {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const services: any = await new Promise((resolve, reject) =>
             this.consul.catalog.service.list((err, result) => {
                 if (err) {
@@ -212,6 +266,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     async serviceNodes(serviceName: string): Promise<{ [key: string]: any }> { // todo: cache
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const nodes: any = await new Promise((resolve, reject) =>
             this.consul.catalog.service.nodes(serviceName, (err, result) => {
                 if (err) {
@@ -225,6 +280,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
 
     async checkList(): Promise<{ [key: string]: any }> {
+        this.assert.ok(this.consul, `cannot reach the consul agent`);
         return await new Promise((resolve, reject) => this.consul.agent.check.list((err, result) => {
             if (err) {
                 reject(err);
