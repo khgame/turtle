@@ -3,7 +3,7 @@ import {createHttpClient, Driver, genLogger, IDriverAdaptor, turtle} from "../..
 import Service = Consul.Agent.Service;
 
 export interface IConsulConf {
-    optional?: boolean; // default true
+    optional?: boolean; // default false
     options?: {
         host?: string; // (String, default: 127.0.0.1): agent address
         port?: number; //  (Integer, default: 8500): agent HTTP(S) port
@@ -84,6 +84,71 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     get id() {
         return `${turtle.conf.name}:${turtle.conf.id}`;
     }
+
+    async createServiceId() {
+        const key = "service_id";
+        let result = false;
+        let newValue = 1;
+        while (!result) {
+            const ExistedKey = await this.get(key);
+            // console.log("ExistedKey", ExistedKey);
+            const Value = ExistedKey ? parseInt(ExistedKey.Value) : 0;
+            const ModifyIndex = ExistedKey ? ExistedKey.ModifyIndex : -1;
+            newValue = Value + 1;
+            if (ModifyIndex > 0) {
+                const ret = await this.cas(key, `${newValue}`, `${ModifyIndex}`);
+                // console.log("ret edi :", ret);
+                result = ret;
+            } else {
+                const ret = await this.set(key, `${newValue}`);
+                // console.log("ret new :", ret);
+                result = !!ret;
+            }
+        }
+        return newValue;
+    }
+
+    async get(key: string): Promise<{
+        LockIndex: number,
+        Key: string,
+        Flags: number,
+        Value: string,
+        CreateIndex: number,
+        ModifyIndex: number
+    }> {
+        const val: any = await new Promise((resolve, reject) => this.consul.kv.get(key, (err, result) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        }));
+
+        return val;
+    }
+
+    async set(key: string, val: string) {
+        const ret = await new Promise((resolve, reject) => this.consul.kv.set(key, val, (err, result) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(result);
+        }));
+        return ret;
+    }
+
+    async cas(key: string, value: string, modifyIndex: string): Promise<any> {
+        const opt = {
+            key, value, cas: modifyIndex
+        };
+        return await new Promise((resolve, reject) => this.consul.kv.set(opt, (err, result) => {
+            if (err) {
+                this.log.warn(`cas operation failed : ${opt} ${err}`);
+                resolve(false);
+            }
+            resolve(result);
+        }));
+    }
+
 
     async register(opts: Service.RegisterOptions) {
         return await new Promise((resolve, reject) => this.consul.agent.service.register(opts, (err, result) => {
