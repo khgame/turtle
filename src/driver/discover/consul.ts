@@ -20,17 +20,31 @@ export interface IConsulConf {
     tags?: string[];
 }
 
+
 @Driver("discover/consul")
 export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     public static inst: DiscoverConsulDriver;
 
-    protected consul: Consul.Consul;
+    public consul: Consul.Consul;
 
     protected conf: IConsulConf;
 
     protected log = genLogger();
-    protected assert = genAssert();
+    public assert = genAssert();
+
+    static assertConsulExist(driver: DiscoverConsulDriver, methodName: string) {
+        driver.assert.ok(driver.consul, () => `call ${methodName} failed, cannot reach the consul agent`);
+    }
+
+    static FieldExist(object: DiscoverConsulDriver, methodName: string, descriptor: TypedPropertyDescriptor<Function>) {
+        const originMethod = descriptor.value;
+        descriptor.value = function (...args: any[]) {
+            DiscoverConsulDriver.assertConsulExist(this, methodName);
+            return originMethod.apply(this, args);
+        };
+
+    }
 
     constructor() {
         DiscoverConsulDriver.inst = this;
@@ -43,7 +57,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         if (!this.consul) {
             let check;
 
-            this.log.silly(`try connect to consul agent ${JSON.stringify(this.conf)}`, );
+            this.log.silly(`try connect to consul agent ${JSON.stringify(this.conf)}`,);
             const options = this.conf.options || {};
             const url = `${options.secure ? "https" : "http"}://${options.host || "127.0.0.1"}:${options.port || "8500"}/v1/agent/self`;
             try {
@@ -128,30 +142,23 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return `${turtle.conf.name}:${turtle.conf.id}`;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async createServiceDID() {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const key = "service_did";
         let result = false;
         let newValue = 1;
         while (!result) {
             const ExistedKey = await this.get(key);
-            // console.log("ExistedKey", ExistedKey);
             const Value = ExistedKey ? parseInt(ExistedKey.Value) : 0;
-            const ModifyIndex = ExistedKey ? ExistedKey.ModifyIndex : -1;
+            const ModifyIndex = ExistedKey ? ExistedKey.ModifyIndex : 0;
             newValue = Value + 1;
-            if (ModifyIndex > 0) {
-                const ret = await this.cas(key, `${newValue}`, `${ModifyIndex}`);
-                // console.log("ret edi :", ret);
-                result = ret;
-            } else {
-                const ret = await this.set(key, `${newValue}`);
-                // console.log("ret new :", ret);
-                result = !!ret;
-            }
+            const ret = await this.cas(key, `${newValue}`, `${ModifyIndex}`);
+            result = ret;
         }
         return newValue;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async get(key: string): Promise<{
         LockIndex: number,
         Key: string,
@@ -160,7 +167,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         CreateIndex: number,
         ModifyIndex: number
     }> {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const val: any = await new Promise((resolve, reject) => this.consul.kv.get(key, (err, result) => {
             if (err) {
                 reject(err);
@@ -171,8 +177,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return val;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async set(key: string, val: string) {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const ret = await new Promise((resolve, reject) => this.consul.kv.set(key, val, (err, result) => {
             if (err) {
                 reject(err);
@@ -182,8 +188,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return ret;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async cas(key: string, value: string, modifyIndex: string): Promise<any> {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const opt = {
             key, value, cas: modifyIndex
         };
@@ -196,9 +202,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }));
     }
 
-
+    @DiscoverConsulDriver.FieldExist
     async register(opts: Service.RegisterOptions) {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         return await new Promise((resolve, reject) => this.consul.agent.service.register(opts, (err, result) => {
             if (err) {
                 reject(err);
@@ -212,11 +217,12 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         });
     }
 
+
     async deregister(serviceId: string) {
-        if (!this.consul && this.conf.optional){
+        if (!this.consul && this.conf.optional) {
             return;
         }
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
+        DiscoverConsulDriver.assertConsulExist(this, "deregister");
         return await new Promise((resolve, reject) => this.consul.agent.service.deregister(serviceId, (err, result) => {
             if (err) {
                 reject(err);
@@ -230,8 +236,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         });
     }
 
+    @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) { // todo: cache
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const health: any = await new Promise((resolve, reject) =>
             this.consul.health.service(serviceName, (err, result) => {
                 if (err) {
@@ -253,8 +259,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return client;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async services() {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const services: any = await new Promise((resolve, reject) =>
             this.consul.catalog.service.list((err, result) => {
                 if (err) {
@@ -265,8 +271,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return services;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async serviceNodes(serviceName: string): Promise<{ [key: string]: any }> { // todo: cache
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         const nodes: any = await new Promise((resolve, reject) =>
             this.consul.catalog.service.nodes(serviceName, (err, result) => {
                 if (err) {
@@ -278,9 +284,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return nodes;
     }
 
-
+    @DiscoverConsulDriver.FieldExist
     async checkList(): Promise<{ [key: string]: any }> {
-        this.assert.ok(this.consul, `cannot reach the consul agent`);
         return await new Promise((resolve, reject) => this.consul.agent.check.list((err, result) => {
             if (err) {
                 reject(err);
