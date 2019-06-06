@@ -11,7 +11,7 @@ export class Assert {
         return this._log || (this._log = genLogger(this.prefix));
     }
 
-    constructor(public prefix: string) {
+    constructor(public prefix?: string) {
     }
 
     ok<T>(condition: T, msg: string | Error | StringMethod) {
@@ -46,7 +46,7 @@ export class Assert {
     }
 }
 
-export function genAssert(prefix: string) {
+export function genAssert(prefix?: string) {
     return new Assert(prefix);
 }
 
