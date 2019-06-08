@@ -42,6 +42,16 @@ export class Turtle<IDrivers> {
     public api: IApi;
 
     public workers: IWorker[];
+// ██████
+    constructor(){
+        console.log(`
+    ██████  ██  ██  ██████  ██████  ██      ██████
+      ██    ██  ██  ██  ██    ██    ██      ██    
+      ██    ██  ██  ████      ██    ██      ██████
+      ██    ██  ██  ██  ██    ██    ██      ██
+      ██    ██████  ██  ██    ██    ██████  ██████  @khgame
+`);
+    }
 
     public get drivers(): IDrivers {
         return this._drivers as IDrivers;
