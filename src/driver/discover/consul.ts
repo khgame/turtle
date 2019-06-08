@@ -2,6 +2,15 @@ import * as Consul from "consul";
 import {createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 
+interface IHealth {
+    api?: string;
+    script?: string;
+    interval?: string;
+    ttl?: string;
+    notes?: string;
+    status?: string;
+}
+
 export interface IConsulConf {
     optional?: boolean; // default false
     options?: {
@@ -10,12 +19,7 @@ export interface IConsulConf {
         secure?: boolean; // (Boolean, default: false): enable HTTPS
         ca?: string[];
     };
-    health: {
-        api: string;
-        interval?: string;
-        notes?: string;
-        status?: string;
-    };
+    health: IHealth | IHealth[];
     dc?: string;
     tags?: string[];
 }
@@ -57,12 +61,11 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         if (!this.consul) {
             let check;
 
-            this.log.silly(`try connect to consul agent ${JSON.stringify(this.conf)}`,);
+            this.log.silly(`try connect to consul agent ${JSON.stringify(this.conf)}`);
             const options = this.conf.options || {};
             const url = `${options.secure ? "https" : "http"}://${options.host || "127.0.0.1"}:${options.port || "8500"}/v1/agent/self`;
             try {
                 check = await http().get(url);
-                console.log("check", check);
             } catch (e) {
                 check = false;
                 this.log.warn(`touch consul error: ${e.message}`);
@@ -105,21 +108,31 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
         }
 
-        const check = {
-            http: `http://localhost:${turtle.runtime.port}/${this.conf.health.api}`,
-            interval: this.conf.health.interval || "5s",
-            notes: this.conf.health.notes,
-            status: this.conf.health.status
-        };
+        let check, checks;
 
-        // console.log("reg optional", this.conf.optional);
+        function healthConfToCheck(conf: IHealth) {
+            return {
+                http: `http://localhost:${turtle.runtime.port}/${conf.api}`,
+                interval: conf.interval || "5s",
+                notes: conf.notes,
+                status: conf.status
+            };
+        }
+
+        if (this.conf.health instanceof Array) {
+            checks = this.conf.health.map(h => healthConfToCheck(h));
+        } else {
+            check = healthConfToCheck(this.conf.health);
+        }
+
         const regResult = await this.register({
             id: `${turtle.conf.name}:${turtle.conf.id}`,
             name: turtle.conf.name,
             tags: this.conf.tags,
             address: turtle.runtime.ip,
             port: turtle.runtime.port,
-            check
+            check,
+            checks
         });
 
         // console.log("regResult", regResult);
