@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/khgame/turtle#readme",
   "dependencies": {
-    "@khgame/jsonrpc": "^0.1.5",
+    "@khgame/jsonrpc": "^0.1.6",
     "@khgame/one-line-call": "^0.1.5",
     "@types/consul": "^0.23.33",
     "axios": "^0.18.0",

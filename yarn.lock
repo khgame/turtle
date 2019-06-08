@@ -25,10 +25,10 @@
   dependencies:
     regenerator-runtime "^0.13.2"
 
-"@khgame/jsonrpc@^0.1.5":
-  version "0.1.5"
-  resolved "https://registry.npm.taobao.org/@khgame/jsonrpc/download/@khgame/jsonrpc-0.1.5.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40khgame%2Fjsonrpc%2Fdownload%2F%40khgame%2Fjsonrpc-0.1.5.tgz#7a10fe2c5a60e8491d933c79002a750f0a676f43"
-  integrity sha1-ehD+LFpg6Ekdkzx5ACp1Dwpnb0M=
+"@khgame/jsonrpc@^0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npm.taobao.org/@khgame/jsonrpc/download/@khgame/jsonrpc-0.1.6.tgz#d14cd33186b4512df38111636bebc5eabefd52cc"
+  integrity sha1-0UzTMYa0US3zgRFja+vF6r79Usw=
   dependencies:
     "@types/axios" "^0.14.0"
 
