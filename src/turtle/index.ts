@@ -42,14 +42,14 @@ export class Turtle<IDrivers> {
     public api: IApi;
 
     public workers: IWorker[];
-// ██████
+
     constructor(){
         console.log(`
     ██████  ██  ██  ██████  ██████  ██      ██████
       ██    ██  ██  ██  ██    ██    ██      ██    
       ██    ██  ██  ████      ██    ██      ██████
       ██    ██  ██  ██  ██    ██    ██      ██
-      ██    ██████  ██  ██    ██    ██████  ██████  @khgame
+      ██    ██████  ██  ██    ██    ██████  ██████ @khgame
 `);
     }
 

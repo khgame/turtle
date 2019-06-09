@@ -72,9 +72,57 @@ await turtle.drivers("redis").get("key");
 
 #### mongo
 
+> to use mongo driver, mongoose should be installed
+
+```js
+interface IMongoConf {
+    host: string;
+    port?: string | number;
+    database: string;
+    username?: string;
+    password?: string;
+}
+```
+
 #### redis
 
+> to use redis driver, redisio should be installed
+
+```js
+interface IRedisConf extends IORedis.RedisOptions {
+    key_mutex_wait_threshold?: number;
+}
+```
+
 #### discover/consul
+
+> to use discover/consul driver, consul should be installed
+
+```js
+interface IHealth {
+    api?: string;
+    script?: string;
+    interval?: string;
+    ttl?: string;
+    notes?: string;
+    status?: string;
+}
+
+interface IConsulConf {
+    optional?: boolean; // default false
+    options?: {
+        host?: string; // (String, default: 127.0.0.1): agent address
+        port?: number; //  (Integer, default: 8500): agent HTTP(S) port
+        secure?: boolean; // (Boolean, default: false): enable HTTPS
+        ca?: string[];
+    };
+    health: IHealth | IHealth[];
+    dc?: string;
+    tags?: string[];
+}
+```
+
+##### did
 
 ### create api
 
