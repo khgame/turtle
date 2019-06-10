@@ -1,6 +1,8 @@
 import * as Consul from "consul";
 import {createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
+import * as fs from "fs-extra";
+import * as Path from "path";
 
 interface IHealth {
     api?: string;
@@ -22,6 +24,9 @@ export interface IConsulConf {
     health: IHealth | IHealth[];
     dc?: string;
     tags?: string[];
+    did?: {
+        head_refresh?: "stable" | "process" | "dynamic"
+    };
 }
 
 
@@ -31,6 +36,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     public static inst: DiscoverConsulDriver;
 
     public consul: Consul.Consul;
+
+    public didHead: number;
 
     protected conf: IConsulConf;
 
@@ -47,7 +54,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             DiscoverConsulDriver.assertConsulExist(this, methodName);
             return originMethod.apply(this, args);
         };
-
     }
 
     constructor() {
@@ -158,18 +164,39 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     @DiscoverConsulDriver.FieldExist
     async createServiceDID() {
         const key = "service_did";
+
+        const headRefreshRule = this.conf && this.conf.did && this.conf.did.head_refresh ? this.conf.did.head_refresh : "stable" ;
+        const didFilePath = Path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle.did`);
+
+        if (headRefreshRule !== "dynamic") {
+            if (this.didHead) {
+                return this.didHead;
+            }
+            if (headRefreshRule === "stable" && fs.existsSync(didFilePath)) {
+                const didStr = fs.readJsonSync(didFilePath);
+                if (didStr) {
+                    return this.didHead = parseInt(didStr.head);
+                }
+            }
+        }
+
         let result = false;
-        let newValue = 1;
+        this.didHead = this.didHead || 0;
         while (!result) {
             const ExistedKey = await this.get(key);
             const Value = ExistedKey ? parseInt(ExistedKey.Value) : 0;
             const ModifyIndex = ExistedKey ? ExistedKey.ModifyIndex : 0;
-            newValue = Value + 1;
-            const ret = await this.cas(key, `${newValue}`, `${ModifyIndex}`);
+            this.didHead = Value + 1;
+            const ret = await this.cas(key, `${this.didHead}`, `${ModifyIndex}`);
             result = ret;
         }
-        return newValue;
+
+        if (headRefreshRule !== "dynamic" && this.didHead !== 0) { // this.didHead === 0 means error
+            fs.writeJSONSync(didFilePath, {head: this.didHead});
+        }
+        return this.didHead;
     }
+
 
     @DiscoverConsulDriver.FieldExist
     async get(key: string): Promise<{
