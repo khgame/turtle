@@ -1,8 +1,9 @@
 import * as Consul from "consul";
-import {createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle} from "../../";
+import { createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle } from "../../";
 import Service = Consul.Agent.Service;
 import * as fs from "fs-extra";
 import * as Path from "path";
+import { BigNumber } from "bignumber.js";
 
 interface IHealth {
     api?: string;
@@ -43,6 +44,17 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     protected log = genLogger();
     public assert = genAssert();
+
+    private _idSeq = {
+        time: 0,
+        seq: 0
+    };
+    public get idSeq() {
+        return this._idSeq;
+    }
+    public set idSeq(value) {
+        this._idSeq = value;
+    }
 
     static assertConsulExist(driver: DiscoverConsulDriver, methodName: string) {
         driver.assert.ok(driver.consul, () => `call ${methodName} failed, cannot reach the consul agent`);
@@ -162,10 +174,10 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async createServiceDID() {
+    async createServiceDIDHeader() {
         const key = "service_did";
 
-        const headRefreshRule = this.conf && this.conf.did && this.conf.did.head_refresh ? this.conf.did.head_refresh : "stable" ;
+        const headRefreshRule = this.conf && this.conf.did && this.conf.did.head_refresh ? this.conf.did.head_refresh : "stable";
         const didFilePath = Path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle.did`);
 
         if (headRefreshRule !== "dynamic") {
@@ -192,9 +204,33 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }
 
         if (headRefreshRule !== "dynamic" && this.didHead !== 0) { // this.didHead === 0 means error
-            fs.writeJSONSync(didFilePath, {head: this.didHead});
+            fs.writeJSONSync(didFilePath, { head: this.didHead });
         }
         return this.didHead;
+    }
+
+    async createServiceDID(base: number = 10) {
+        const mark = await this.createServiceDIDHeader();
+        const timeStart = 1560096000000;
+        const timestamp = Math.floor((Date.now() - timeStart) / 1000);
+        if (this._idSeq.time !== timestamp) {
+            this._idSeq.time = timestamp;
+            this._idSeq.seq = 0;
+        }
+        const seq = ++this._idSeq.seq;
+        
+        const pow2_40 = 1099511627776;
+        const pow2_12 = 4096;
+
+        if (seq >= pow2_12) {
+            throw new Error("overflow");
+        }
+
+        const pow2_40Str = new BigNumber(pow2_40);
+        const pow2_12Str = new BigNumber(pow2_12);
+
+        const did = (pow2_40Str.multipliedBy(mark)).plus(pow2_12Str.multipliedBy(timestamp)).plus(seq);
+        return did.toString(base);
     }
 
 
@@ -290,8 +326,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             if (h.Checks.find((c: any) => c.Status !== "passing")) {
                 return;
             }
-            const {ID, Address, Port} = h.Service;
-            return {ID, Address, Port};
+            const { ID, Address, Port } = h.Service;
+            return { ID, Address, Port };
         }).filter((c: any) => c);
         // console.log("services", services);
         const service = services[Math.floor(services.length * Math.random())];

@@ -44,6 +44,7 @@
     "@khgame/one-line-call": "^0.1.5",
     "@types/consul": "^0.23.33",
     "axios": "^0.18.0",
+    "bignumber.js": "^9.0.0",
     "elliptic": "^6.4.1",
     "fs-extra": "^7.0.1",
     "get-port": "^5.0.0",
