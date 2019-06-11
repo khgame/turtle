@@ -49,6 +49,10 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         time: 0,
         seq: 0
     };
+
+    private pow2_40Str = new BigNumber(1099511627776);
+    private pow2_12Str = new BigNumber(4096);
+
     public get idSeq() {
         return this._idSeq;
     }
@@ -219,17 +223,13 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }
         const seq = ++this._idSeq.seq;
         
-        const pow2_40 = 1099511627776;
-        const pow2_12 = 4096;
+        
 
-        if (seq >= pow2_12) {
+        if (seq >= 4096) {
             throw new Error("overflow");
         }
 
-        const pow2_40Str = new BigNumber(pow2_40);
-        const pow2_12Str = new BigNumber(pow2_12);
-
-        const did = (pow2_40Str.multipliedBy(mark)).plus(pow2_12Str.multipliedBy(timestamp)).plus(seq);
+        const did = (this.pow2_40Str.multipliedBy(mark)).plus(this.pow2_12Str.multipliedBy(timestamp)).plus(seq);
         return did.toString(base);
     }
 
