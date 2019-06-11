@@ -4,6 +4,7 @@ import {driverMetaMgr, IDriverMetadata} from "./meta";
 import * as Path from "path";
 import {importClasses, importFunctions} from "../utils/importClasses";
 import {EventEmitter} from "events";
+import {turtleVerbose} from "../utils/turtleVerbose";
 
 class DriverFactory {
 
@@ -53,7 +54,7 @@ class DriverFactory {
         }
 
         /** return drivers map */
-        console.log("drivers loaded", Object.keys(results));
+        turtleVerbose("DRIVERS INITIALED", `drivers:${Object.keys(results).reduce((p, s) => p + " ◆ " + s, "")}`);
         return results;
     }
 
@@ -78,7 +79,8 @@ class DriverFactory {
         }
 
         /** return drivers map */
-        console.log("drivers reloaded", Object.keys(results));
+
+        turtleVerbose("DRIVERS RELOADED", ... Object.keys(results));
         return results;
     }
 

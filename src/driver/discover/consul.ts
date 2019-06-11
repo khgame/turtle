@@ -222,8 +222,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             this._idSeq.seq = 0;
         }
         const seq = ++this._idSeq.seq;
-        
-        
 
         if (seq >= 4096) {
             throw new Error("overflow");

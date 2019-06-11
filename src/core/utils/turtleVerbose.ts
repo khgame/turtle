@@ -1,22 +1,13 @@
-export function turtleVerbose(...arr: any[]) {
-    if (arr.length === 0) {
-        return;
-    }
+export function turtleVerbose(title: string, ...arr: any[]) {
+    const strs: string[] = arr.map(a => typeof a === "string" ? a : `${a}`);
+    const maxLength = strs.reduce((p, s) => s.length > p ? s.length : p, 8 + title.length);
 
-    if (arr.length === 1) {
-        return turtlePrint(arr[0]);
-    }
-
-    // const strs: string[] = arr.map(a => typeof a === "string" ? a : `${a}`);
-    // const maxLength = strs.reduce((p, s) => s.length > p ? s.length : p, 0);
-    // const __ = +"─".repeat(maxLength + 4);
-    // const ___ = +" ".repeat(maxLength - 4);
-    // console.log("   ┌" + __ + "┐");
-    // console.log("   │ TURTLE: " + ___ + " │");
-    // strs.forEach(s => {
-    //     console.log("   │ - " + s + " ".repeat(maxLength - s.length) + " │");
-    // });
-    // console.log("   └" + __ + "┘");
+    console.log("   ┌─TURTLE: " + title + " " + "┄".repeat(maxLength - 4 - title.length) + "┐");
+    // console.log("   │ TURTLE: " + title + " ".repeat(maxLength - 4 - title.length) + " │");
+    strs.forEach(s => {
+        console.log("   ┆ ⊙ " + s + " ".repeat(maxLength + 2 - s.length) + " ┆");
+    });
+    console.log("   └─┴┄┈" + " ".repeat(maxLength) + "┈┄┘");
 }
 
 export function turtlePrint(out: any) {

@@ -5,6 +5,7 @@ import {CommandsAPI} from "./commands";
 import * as path from "path";
 import {turtle} from "./index";
 import * as fs from "fs-extra";
+import {turtleVerbose} from "../core/utils/turtleVerbose";
 
 export class Runtime {
     public port: number;
@@ -15,6 +16,18 @@ export class Runtime {
     public node_env: string;
     public pkg_version: string;
 
+    constructor(){
+        this.initProcessInfo();
+    }
+
+    initProcessInfo() {
+        this.ip = ip.address();
+        this.pid = process.pid;
+        this.cwd = process.cwd();
+        this.node_env = process.env.NODE_ENV;
+        this.pkg_version = process.env.npm_package_version;
+    }
+
     async listenCommands() {
         const port = await getPort({port: getPort.makeRange(13000, 13100)});
         const server = new Server();
@@ -22,24 +35,20 @@ export class Runtime {
         server.listen(port);
         const url = `${ip.address()}:${port}`;
         const target = server.getTarget(CommandsAPI);
-        console.log(`start commands server at ${url}, targets => ${JSON.stringify(target)}`);
+        turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
 
         this.cmd_port = port;
-        this.save();
     }
 
-    setProcessInfo(port: number){
-        this.ip = ip.address();
+    setPort(port: number){
         this.port = port;
-        this.pid = process.pid;
-        this.cwd = process.cwd();
-        this.node_env = process.env.NODE_ENV;
-        this.pkg_version = process.env.npm_package_version;
+        this.initProcessInfo();
         this.save();
     }
 
     save(){
         const p = path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
         fs.writeFileSync(p, JSON.stringify(this, null, 2));
+        turtleVerbose("RUNTIME SAVED");
     }
 }

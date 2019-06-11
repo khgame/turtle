@@ -11,7 +11,7 @@ import {Runtime} from "./runtime";
 
 import {driverFactory} from "../core/driver/driverFactory";
 import {IWorker, WorkerRunningState} from "../core/worker";
-import {turtlePrint} from "../core/utils/turtleVerbose";
+import {turtleVerbose} from "../core/utils/turtleVerbose";
 
 export class Turtle<IDrivers> {
 
@@ -110,8 +110,6 @@ export class Turtle<IDrivers> {
             console.error(`INITIAL DRIVERS FAILED, ${ex}`);
             throw ex;
         }
-
-        turtlePrint("DRIVERS INITIALED");
     }
 
     public async reload(sig?: string) {
@@ -150,6 +148,11 @@ export class Turtle<IDrivers> {
         process.on("SIGHUP", () => this.reload("SIGHUP"));
         await this.runtime.listenCommands();
         this.initialed = true;
+
+        turtleVerbose(`PROCESS INITIALED (pid: ${turtle.runtime.pid})`,
+            `cwd: ${turtle.runtime.cwd}`,
+            `env: ${turtle.runtime.node_env}`,
+        );
     }
 
 
@@ -194,16 +197,16 @@ export class Turtle<IDrivers> {
             default:
                 throw new Error("unknown running state code.");
         }
-        this.runtime.setProcessInfo(port);
+        this.runtime.setPort(port);
         this.api = api;
         await driverFactory.triggerApiStart();
 
-        turtlePrint("API STARTED");
+        turtleVerbose("API STARTED", `serve at: http://${turtle.runtime.ip}:${turtle.runtime.port}`);
     }
 
     protected async startWorkers(workers: IWorker[]) {
         if (!this.workers) {
-            this.log.info(`there no workers to start.`);
+            this.log.info(`there are no workers to start.`);
             return;
         }
         // todo
@@ -254,7 +257,7 @@ export class Turtle<IDrivers> {
         //
 
 
-        turtlePrint("WORKERS STARTED");
+        turtleVerbose("WORKERS STARTED");
     }
 
     public async startAll(api: IApi, workers?: IWorker[]) {
@@ -297,12 +300,12 @@ export class Turtle<IDrivers> {
         }
         await driverFactory.triggerApiClose();
 
-        turtlePrint("API CLOSED");
+        turtleVerbose("API CLOSED");
     }
 
     public async closeWorker() {
         if (!this.workers) {
-            this.log.info(`there no workers to close.`);
+            this.log.info(`there are no workers to close.`);
             return;
         }
         for (const i in this.workers) {
@@ -339,7 +342,7 @@ export class Turtle<IDrivers> {
         }
         await driverFactory.triggerWorkerClose();
 
-        turtlePrint("API CLOSED");
+        turtleVerbose("API CLOSED");
     }
 
     public async closeAll() {
