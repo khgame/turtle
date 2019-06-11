@@ -50,6 +50,11 @@ export class Turtle<IDrivers> {
       ██    ██  ██  ████      ██    ██      ██████
       ██    ██  ██  ██  ██    ██    ██      ██
       ██    ██████  ██  ██    ██    ██████  ██████ @khgame
+      
+   ┌──────────────────────────────────────────────────────┐
+   │ - github - https://github.com/khgame/turtle          │ 
+   │ - npm - https://www.npmjs.com/package/@khgame/turtle │ 
+   └──────────────────────────────────────────────────────┘
 `);
     }
 
@@ -104,7 +109,11 @@ export class Turtle<IDrivers> {
             console.error(`INITIAL DRIVERS FAILED, ${ex}`);
             throw ex;
         }
-        console.log("DRIVERS INITIALED");
+        console.log(`
+   ┌───────────────────────────┐
+   │ TURTLE: DRIVERS INITIALED │ 
+   └───────────────────────────┘
+`);
     }
 
     public async reload(sig?: string) {
@@ -190,6 +199,11 @@ export class Turtle<IDrivers> {
         this.runtime.setProcessInfo(port);
         this.api = api;
         await driverFactory.triggerApiStart();
+        console.log(`
+   ┌─────────────────────┐
+   │ TURTLE: API STARTED │ 
+   └─────────────────────┘
+`);
     }
 
     protected async startWorkers(workers: IWorker[]) {
@@ -243,6 +257,11 @@ export class Turtle<IDrivers> {
         //     }
         // }
         //
+        console.log(`
+   ┌─────────────────────────┐
+   │ TURTLE: WORKERS STARTED │ 
+   └─────────────────────────┘
+`);
     }
 
     public async startAll(api: IApi, workers?: IWorker[]) {
@@ -284,6 +303,11 @@ export class Turtle<IDrivers> {
                 throw new Error("unknown running state code.");
         }
         await driverFactory.triggerApiClose();
+        console.log(`
+   ┌────────────────────┐
+   │ TURTLE: API CLOSED │ 
+   └────────────────────┘
+`);
     }
 
     public async closeWorker() {
@@ -324,6 +348,11 @@ export class Turtle<IDrivers> {
             }
         }
         await driverFactory.triggerWorkerClose();
+        console.log(`
+   ┌────────────────────────┐
+   │ TURTLE: WORKERS CLOSED │ 
+   └────────────────────────┘
+`);
     }
 
     public async closeAll() {
