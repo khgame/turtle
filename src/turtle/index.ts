@@ -11,6 +11,7 @@ import {Runtime} from "./runtime";
 
 import {driverFactory} from "../core/driver/driverFactory";
 import {IWorker, WorkerRunningState} from "../core/worker";
+import {turtlePrint} from "../core/utils/turtleVerbose";
 
 export class Turtle<IDrivers> {
 
@@ -109,11 +110,8 @@ export class Turtle<IDrivers> {
             console.error(`INITIAL DRIVERS FAILED, ${ex}`);
             throw ex;
         }
-        console.log(`
-   ┌───────────────────────────┐
-   │ TURTLE: DRIVERS INITIALED │ 
-   └───────────────────────────┘
-`);
+
+        turtlePrint("DRIVERS INITIALED");
     }
 
     public async reload(sig?: string) {
@@ -199,11 +197,8 @@ export class Turtle<IDrivers> {
         this.runtime.setProcessInfo(port);
         this.api = api;
         await driverFactory.triggerApiStart();
-        console.log(`
-   ┌─────────────────────┐
-   │ TURTLE: API STARTED │ 
-   └─────────────────────┘
-`);
+
+        turtlePrint("API STARTED");
     }
 
     protected async startWorkers(workers: IWorker[]) {
@@ -257,11 +252,9 @@ export class Turtle<IDrivers> {
         //     }
         // }
         //
-        console.log(`
-   ┌─────────────────────────┐
-   │ TURTLE: WORKERS STARTED │ 
-   └─────────────────────────┘
-`);
+
+
+        turtlePrint("WORKERS STARTED");
     }
 
     public async startAll(api: IApi, workers?: IWorker[]) {
@@ -303,11 +296,8 @@ export class Turtle<IDrivers> {
                 throw new Error("unknown running state code.");
         }
         await driverFactory.triggerApiClose();
-        console.log(`
-   ┌────────────────────┐
-   │ TURTLE: API CLOSED │ 
-   └────────────────────┘
-`);
+
+        turtlePrint("API CLOSED");
     }
 
     public async closeWorker() {
@@ -348,11 +338,8 @@ export class Turtle<IDrivers> {
             }
         }
         await driverFactory.triggerWorkerClose();
-        console.log(`
-   ┌────────────────────────┐
-   │ TURTLE: WORKERS CLOSED │ 
-   └────────────────────────┘
-`);
+
+        turtlePrint("API CLOSED");
     }
 
     public async closeAll() {
