@@ -1,5 +1,5 @@
 import * as Consul from "consul";
-import {createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle} from "../../";
+import {createHttpClient, Driver, genAssert, genLogger, genMemCache, http, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 import * as fs from "fs-extra";
 import * as Path from "path";
@@ -44,7 +44,6 @@ enum NodeStatus {
     HEALTHY,
 }
 
-
 class DIDGenerator {
 
     private _idSeq = {
@@ -86,6 +85,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     protected log = genLogger();
     public assert = genAssert();
+
+    protected httpClientCache = genMemCache();
 
     private didGenerator = new DIDGenerator();
 
@@ -317,11 +318,14 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) { // todo: cache
-        const services = await this.serviceNodes(serviceName, true);
+        let client = this.httpClientCache.get(serviceName);
+        if (!client) {
+            const services = await this.serviceNodes(serviceName, true);
+            const service = services[Math.floor(services.length * Math.random())];
+            client = createHttpClient(`http://${service.Address}:${service.Port}`);
+            this.httpClientCache.set(serviceName, client, 5);
+        }
 
-        // console.log("services", services);
-        const service = services[Math.floor(services.length * Math.random())];
-        const client = createHttpClient(`http://${service.Address}:${service.Port}`);
         return client;
     }
 
