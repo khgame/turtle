@@ -1,9 +1,10 @@
 import * as Consul from "consul";
-import { createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle } from "../../";
+import {createHttpClient, Driver, genAssert, genLogger, http, IDriverAdaptor, turtle} from "../../";
 import Service = Consul.Agent.Service;
 import * as fs from "fs-extra";
 import * as Path from "path";
-import { BigNumber } from "bignumber.js";
+import {BigNumber} from "bignumber.js";
+import {promisify} from "util";
 
 interface IHealth {
     api?: string;
@@ -28,6 +29,12 @@ export interface IConsulConf {
     did?: {
         head_refresh?: "stable" | "process" | "dynamic"
     };
+}
+
+interface IServiceNode {
+    ID: string;
+    Address: string;
+    Port: number;
 }
 
 
@@ -56,6 +63,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     public get idSeq() {
         return this._idSeq;
     }
+
     public set idSeq(value) {
         this._idSeq = value;
     }
@@ -208,7 +216,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }
 
         if (headRefreshRule !== "dynamic" && this.didHead !== 0) { // this.didHead === 0 means error
-            fs.writeJSONSync(didFilePath, { head: this.didHead });
+            fs.writeJSONSync(didFilePath, {head: this.didHead});
         }
         return this.didHead;
     }
@@ -278,13 +286,9 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     @DiscoverConsulDriver.FieldExist
     async register(opts: Service.RegisterOptions) {
-        return await new Promise((resolve, reject) => this.consul.agent.service.register(opts, (err, result) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(result);
-        })).catch(ex => {
-            this.log.error(`register driver discover/consul failed : ${ex}`);
+        const service = this.consul.agent.service;
+        return await promisify(service.register.bind(service))(opts).catch((ex: Error) => {
+            this.log.error(`register driver discover/consul failed : ${ex}, ${ex.stack}`);
             if (!this.conf.optional) {
                 throw ex;
             }
@@ -297,12 +301,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             return;
         }
         DiscoverConsulDriver.assertConsulExist(this, "deregister");
-        return await new Promise((resolve, reject) => this.consul.agent.service.deregister(serviceId, (err, result) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(result);
-        })).catch(ex => {
+        const service = this.consul.agent.service;
+        return await promisify(service.deregister.bind(service))(serviceId).catch((ex: Error) => {
             // this.log.error(`deregister driver discover/consul failed : ${ex}`);
             if (!this.conf.optional) {
                 throw ex;
@@ -312,21 +312,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) { // todo: cache
-        const health: any = await new Promise((resolve, reject) =>
-            this.consul.health.service(serviceName, (err, result) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(result);
-            }));
-        // console.log("health", JSON.stringify(health, null, 4));
-        const services = health.map((h: any) => {
-            if (h.Checks.find((c: any) => c.Status !== "passing")) {
-                return;
-            }
-            const { ID, Address, Port } = h.Service;
-            return { ID, Address, Port };
-        }).filter((c: any) => c);
+        const services = await this.serviceNodes(serviceName);
+
         // console.log("services", services);
         const service = services[Math.floor(services.length * Math.random())];
         const client = createHttpClient(`http://${service.Address}:${service.Port}`);
@@ -346,16 +333,19 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async serviceNodes(serviceName: string): Promise<{ [key: string]: any }> { // todo: cache
-        const nodes: any = await new Promise((resolve, reject) =>
-            this.consul.catalog.service.nodes(serviceName, (err, result) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(result);
-            }));
-        console.log("=== nodes", nodes);
-        return nodes;
+    async serviceNodes(serviceName: string): Promise<IServiceNode[]> { // todo: cache
+        const health = this.consul.health; // this.consul.health.service
+        const healthNodes: any = await promisify(health.service.bind(health))(serviceName);
+
+        // console.log("healthNodes", healthNodes);
+
+        return healthNodes.map((h: any) => {
+            if (h.Checks.find((c: any) => c.Status !== "passing")) {
+                return;
+            }
+            const {ID, Address, Port} = h.Service;
+            return {ID, Address, Port};
+        }).filter((c: any) => c);
     }
 
     @DiscoverConsulDriver.FieldExist
@@ -366,6 +356,10 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             }
             resolve(result);
         }));
+    }
+
+    async selfAlive() {
+
     }
 
     async exist() { // todo
