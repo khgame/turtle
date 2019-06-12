@@ -45,6 +45,34 @@ enum NodeStatus {
 }
 
 
+class DIDGenerator {
+
+    private _idSeq = {
+        time: 0,
+        seq: 0
+    };
+
+    private pow2_40Str = new BigNumber(1099511627776);
+    private pow2_12Str = new BigNumber(4096);
+
+    update(header: number, base: number = 10): string {
+        const timestamp = Math.floor((Date.now() - 1560096000000) / 1000);
+        if (this._idSeq.time !== timestamp) {
+            this._idSeq.time = timestamp;
+            this._idSeq.seq = 0;
+        }
+        const seq = ++this._idSeq.seq;
+
+        if (seq >= 4096) {
+            throw new Error("overflow");
+        }
+
+        const did = (this.pow2_40Str.multipliedBy(header)).plus(this.pow2_12Str.multipliedBy(timestamp)).plus(seq);
+        return did.toString(base);
+    }
+
+}
+
 @Driver("discover/consul")
 export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
@@ -59,21 +87,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     protected log = genLogger();
     public assert = genAssert();
 
-    private _idSeq = {
-        time: 0,
-        seq: 0
-    };
-
-    private pow2_40Str = new BigNumber(1099511627776);
-    private pow2_12Str = new BigNumber(4096);
-
-    public get idSeq() {
-        return this._idSeq;
-    }
-
-    public set idSeq(value) {
-        this._idSeq = value;
-    }
+    private didGenerator = new DIDGenerator();
 
     static assertConsulExist(driver: DiscoverConsulDriver, methodName: string) {
         driver.assert.ok(driver.consul, () => `call ${methodName} failed, cannot reach the consul agent`);
@@ -184,7 +198,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                 throw new Error(`onApiClose: cannot reach the consul agent`);
             }
         }
-
         await this.deregister(this.id);
     }
 
@@ -193,7 +206,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async createServiceDIDHeader() {
+    async createServiceDIDHeader(): Promise<number> {
         const key = "service_did";
 
         const headRefreshRule = this.conf && this.conf.did && this.conf.did.head_refresh ? this.conf.did.head_refresh : "stable";
@@ -228,24 +241,10 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         return this.didHead;
     }
 
+    @DiscoverConsulDriver.FieldExist
     async createServiceDID(base: number = 10) {
-        const mark = await this.createServiceDIDHeader();
-        const timeStart = 1560096000000;
-        const timestamp = Math.floor((Date.now() - timeStart) / 1000);
-        if (this._idSeq.time !== timestamp) {
-            this._idSeq.time = timestamp;
-            this._idSeq.seq = 0;
-        }
-        const seq = ++this._idSeq.seq;
-
-        if (seq >= 4096) {
-            throw new Error("overflow");
-        }
-
-        const did = (this.pow2_40Str.multipliedBy(mark)).plus(this.pow2_12Str.multipliedBy(timestamp)).plus(seq);
-        return did.toString(base);
+        return this.didGenerator.update(await this.createServiceDIDHeader(), base);
     }
-
 
     @DiscoverConsulDriver.FieldExist
     async get(key: string): Promise<{
@@ -302,7 +301,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         });
     }
 
-
     async deregister(serviceId: string) {
         if (!this.consul && this.conf.optional) {
             return;
@@ -328,7 +326,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async services() {
+    async services() { // todo
         const services: any = await new Promise((resolve, reject) =>
             this.consul.catalog.service.list((err, result) => {
                 if (err) {
@@ -343,9 +341,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     async serviceNodes(serviceName: string, onlyHealthy: boolean = false): Promise<IServiceNode[]> { // todo: cache
         const health = this.consul.health; // this.consul.health.service
         const healthNodes: any = await promisify(health.service.bind(health))(serviceName);
-
-        // console.log("healthNodes", healthNodes);
-
         return healthNodes.map((h: any) => {
             if (onlyHealthy && h.Checks.find((c: any) => c.Status !== "passing")) {
                 return;
@@ -356,15 +351,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async checkList(): Promise<{ [key: string]: any }> {
-        return await new Promise((resolve, reject) => this.consul.agent.check.list((err, result) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(result);
-        }));
-    }
-
     async selfStatus(): Promise<NodeStatus> {
         const services = await this.serviceNodes(turtle.conf.name, false);
 
