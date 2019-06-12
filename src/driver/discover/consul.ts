@@ -35,6 +35,13 @@ interface IServiceNode {
     ID: string;
     Address: string;
     Port: number;
+    Status: string;
+}
+
+enum NodeStatus {
+    NOTEXIST,
+    UNHEALTHY,
+    HEALTHY,
 }
 
 
@@ -133,8 +140,8 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             }
         }
 
-        const exist = await this.exist();
-        if (exist) {
+        const exist = await this.selfStatus();
+        if (exist !== NodeStatus.NOTEXIST) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
         }
 
@@ -312,7 +319,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) { // todo: cache
-        const services = await this.serviceNodes(serviceName);
+        const services = await this.serviceNodes(serviceName, true);
 
         // console.log("services", services);
         const service = services[Math.floor(services.length * Math.random())];
@@ -333,18 +340,18 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async serviceNodes(serviceName: string): Promise<IServiceNode[]> { // todo: cache
+    async serviceNodes(serviceName: string, onlyHealthy: boolean = false): Promise<IServiceNode[]> { // todo: cache
         const health = this.consul.health; // this.consul.health.service
         const healthNodes: any = await promisify(health.service.bind(health))(serviceName);
 
         // console.log("healthNodes", healthNodes);
 
         return healthNodes.map((h: any) => {
-            if (h.Checks.find((c: any) => c.Status !== "passing")) {
+            if (onlyHealthy && h.Checks.find((c: any) => c.Status !== "passing")) {
                 return;
             }
-            const {ID, Address, Port} = h.Service;
-            return {ID, Address, Port};
+            const {ID, Address, Port, Status} = h.Service;
+            return {ID, Address, Port, Status};
         }).filter((c: any) => c);
     }
 
@@ -358,29 +365,20 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }));
     }
 
-    async selfAlive() {
+    async selfStatus(): Promise<NodeStatus> {
+        const services = await this.serviceNodes(turtle.conf.name, false);
 
+        const service = services.find(t => t.ID === this.id);
+
+        if (!service) {
+            return NodeStatus.NOTEXIST;
+        } else if (service.Status !== "passing") {
+            return NodeStatus.UNHEALTHY;
+        } else {
+            return NodeStatus.HEALTHY;
+        }
     }
 
-    async exist() { // todo
-        // const services = await this.serviceList();
-        const checks = await this.checkList();
-
-        const combinedId = this.id;
-        // const service = services[combinedId];
-        // if (!service) {
-        //     return false;
-        // }
-
-        // const check = checks[`service:${combinedId}`];
-        // if (!check) {
-        //     return true;
-        // }
-        // console.log("check", check);
-        // return check.Status === "passing";
-
-        return false;
-    }
 }
 
 
