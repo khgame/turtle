@@ -1,17 +1,26 @@
 import axios, {AxiosInstance} from "axios";
 import {turtle} from "../turtle";
+import {genMemCache} from "./memCache";
+
+
+let cache = genMemCache();
 
 export function createHttpClient(baseURL: string = "", timeout: number = 17000) {
-    return axios.create({
-        baseURL,
-        timeout,
-        responseType: "json",
-        headers: {
-            "svr_name":  turtle.conf.name,
-            "svr_id":  turtle.conf.id,
-            "Content-Type": "application/json",
-        },
-    });
+    let client: AxiosInstance = cache.get(baseURL);
+    if (!client) {
+        client = axios.create({
+            baseURL,
+            timeout,
+            responseType: "json",
+            headers: {
+                "svr_name": turtle.conf.name,
+                "svr_id": turtle.conf.id,
+                "Content-Type": "application/json",
+            },
+        });
+        cache.set(baseURL, client, 600); // recreate every 10 min
+    }
+    return client;
 }
 
 
