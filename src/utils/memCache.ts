@@ -46,19 +46,18 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
         }
         // locked by me or cache failed. when it triggered by cache-failed, racing may happen.
         try {
-            // update loosing cache
             value = await fnGetVal(key);
-            if (value !== undefined) { // avoid unexpected return: if the fnGetVal got void return value, cache will not set
-                ret.lock(enableKey, ttl);
-                cache.set(key, value, ttl * 2);
-            }
         } catch {
         }
-        ret.unlock(acquireKey);
 
-        if (!value) {
+        if (value === undefined) {
             throw new Error(`get loosing cache of key ${key} error`);
         }
+
+        // update loosing cache
+        cache.set(key, value, ttl * 2);
+        ret.lock(enableKey, ttl);
+        ret.unlock(acquireKey);
 
         return value;
     };

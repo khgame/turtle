@@ -32,10 +32,10 @@ export interface IConsulConf {
 }
 
 interface IServiceNode {
-    ID: string;
-    Address: string;
-    Port: number;
-    Status: string;
+    id: string;
+    address: string;
+    port: number;
+    healthy: boolean;
 }
 
 enum NodeStatus {
@@ -324,7 +324,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             async (name) => {
                 const services = await this.serviceNodes(name, true);
                 const service = services[Math.floor(services.length * Math.random())];
-                return createHttpClient(`http://${service.Address}:${service.Port}`);
+                return createHttpClient(`http://${service.address}:${service.port}`);
             },
             5);
     }
@@ -342,26 +342,29 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                 const health = this.consul.health; // this.consul.health.service
                 const healthNodes: any = await promisify(health.service.bind(health))(name);
                 return healthNodes.map((h: any) => {
-                    const {ID, Address, Port, Status} = h.Service;
-                    return {ID, Address, Port, Status};
+                    const {ID, Address, Port} = h.Service;
+                    return {
+                        id: ID, address: Address, port: Port,
+                        passing: (h.Checks as any[]).findIndex((c: any) => c.Status !== "healthy") >= 0
+                    };
                 }).filter((c: any) => c);
             }, 2); // refresh cache every second, racing may happen, delay can be up to 2 + ttl
 
-        return onlyHealthy ? result.filter(c => c.Status === "passing") : result;
+        return onlyHealthy ? result.filter(n => n.healthy) : result;
     }
 
     @DiscoverConsulDriver.FieldExist
     async selfStatus(): Promise<NodeStatus> {
         const services = await this.serviceNodes(turtle.conf.name, false);
 
-        const service = services.find(t => t.ID === this.id);
+        const service = services.find(t => t.id === this.id);
 
         if (!service) {
             return NodeStatus.NOTEXIST;
-        } else if (service.Status !== "passing") {
-            return NodeStatus.UNHEALTHY; // todo: is me ?
-        } else {
+        } else if (service.healthy) {
             return NodeStatus.HEALTHY;
+        } else {
+            return NodeStatus.UNHEALTHY; // todo: is me ?
         }
     }
 
