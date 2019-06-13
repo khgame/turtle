@@ -330,7 +330,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         });
     }
 
-    @DiscoverConsulDriver.FieldExist
+    // @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) {
 
         return await this.httpClientCache.getLoosingCache(
