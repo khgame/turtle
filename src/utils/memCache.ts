@@ -8,6 +8,8 @@ export interface IMemCache extends NodeCache {
 
     lockMany(keys: string[], ttl: number): boolean; // must ttl
     unlockMany(keys: string[]): boolean;
+
+    getLoosingCache<TVal>(key: string, fnGetVal: (key: string) => Promise<TVal>, ttl: number): Promise<TVal>;
 }
 
 export function genMemCache(options?: NodeCache.Options): IMemCache {
@@ -26,32 +28,39 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
         return cache.del(key) === 1;
     };
 
-    ret.getLoosingCache = async (key: string, fnGetVal: (key: string) => Promise<any>, ttl: number = 0) => { // todo: test this
+    ret.getLoosingCache = async <TVal>(key: string, fnGetVal: (key: string) => Promise<TVal>, ttl: number = 0): Promise<TVal> => { // todo: test this
         const enableKey = "__enable__" + key;
         const acquireKey = "__acquire__" + key;
+        let value: TVal;
         if (cache.get(enableKey) !== undefined || !ret.lock(acquireKey, 1)) { // 1 query per second
-            let value = cache.get(key);
-            let t = 50;
-            while (value === undefined && t <= 250) { // up to 750 ms
+            value = cache.get(key);
+
+            for (let t = 50; value === undefined && t <= 250; t += 50) { // try wait up to 750 ms
                 await forMs(t);
                 value = cache.get(key);
-                t += 50;
             }
 
-            if (value) {
+            if (value === undefined) { // query directly when it's still failed
                 return value;
             }
         }
         // locked by me or cache failed. when it triggered by cache-failed, racing may happen.
         try {
             // update loosing cache
-            let value = await fnGetVal(key);
-            ret.lock(enableKey, ttl);
-            cache.set(key, value, ttl * 2);
+            value = await fnGetVal(key);
+            if (value !== undefined) { // avoid unexpected return: if the fnGetVal got void return value, cache will not set
+                ret.lock(enableKey, ttl);
+                cache.set(key, value, ttl * 2);
+            }
         } catch {
         }
         ret.unlock(acquireKey);
-        return;
+
+        if (!value) {
+            throw new Error(`get loosing cache of key ${key} error`);
+        }
+
+        return value;
     };
 
     ret.lockMany = (keys: string[], ttl: number) => {
