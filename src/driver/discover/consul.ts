@@ -351,7 +351,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                     const {ID, Address, Port} = h.Service;
                     return {
                         id: ID, address: Address, port: Port,
-                        healthy: (h.Checks as any[]).findIndex((c: any) => c.Status !== "healthy") >= 0
+                        healthy: (h.Checks as any[]).findIndex((c: any) => c.Status !== "passing") < 0
                     };
                 }).filter((c: any) => c);
             }, 2); // refresh cache every second, racing may happen, delay can be up to 2 + ttl
