@@ -40,7 +40,7 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
                 value = cache.get(key);
             }
 
-            if (value === undefined) { // query directly when it's still failed
+            if (value !== undefined) { // query directly when it's still failed
                 return value;
             }
         }
