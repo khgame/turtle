@@ -29,6 +29,14 @@ export interface IConsulConf {
     did?: {
         head_refresh?: "stable" | "process" | "dynamic"
     };
+    request_fallback: {
+        [key: string]: {
+            http?: string,
+            https?: string,
+            tcp?: string,
+            udp?: string
+        }
+    };
 }
 
 interface IServiceNode {
@@ -324,13 +332,28 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) {
+
         return await this.httpClientCache.getLoosingCache(
             serviceName,
             async (name) => {
-                const services = await this.serviceNodes(name, true);
-                // console.log("services", services);
-                const service = services[Math.floor(services.length * Math.random())];
-                return createHttpClient(`http://${service.address}:${service.port}`);
+                let ret;
+                if (this.consul) {
+                    const services = await this.serviceNodes(name, true);
+                    if (services.length > 0) {
+                        const service = services[Math.floor(services.length * Math.random())];
+                        ret = createHttpClient(`http://${service.address}:${service.port}`);
+                    }
+                }
+
+                if (!ret) {
+                    let fallBackUrl = this.conf.request_fallback[serviceName] && this.conf.request_fallback[serviceName].http;
+                    if (fallBackUrl) {
+                        this.log.warn(`discover/consul: httpClient of service ${serviceName} fallback to ${fallBackUrl}`);
+                        ret = createHttpClient(fallBackUrl);
+                    }
+                }
+
+                return ret;
             },
             5);
     }
