@@ -86,6 +86,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     protected log = genLogger();
     public assert = genAssert();
 
+    protected servicesCache = genMemCache();
     protected httpClientCache = genMemCache();
 
     private didGenerator = new DIDGenerator();
@@ -317,41 +318,36 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async httpClient(serviceName: string) { // todo: cache
-        let client = this.httpClientCache.get(serviceName);
-        if (!client) {
-            const services = await this.serviceNodes(serviceName, true);
-            const service = services[Math.floor(services.length * Math.random())];
-            client = createHttpClient(`http://${service.Address}:${service.Port}`);
-            this.httpClientCache.set(serviceName, client, 5);
+    async httpClient(serviceName: string) {
+        return await this.httpClientCache.getLoosingCache(
+            serviceName,
+            async (name) => {
+                const services = await this.serviceNodes(name, true);
+                const service = services[Math.floor(services.length * Math.random())];
+                return createHttpClient(`http://${service.Address}:${service.Port}`);
+            },
+            5);
+    }
+
+    @DiscoverConsulDriver.FieldExist
+    async services() {
+        // todo
+    }
+
+    @DiscoverConsulDriver.FieldExist
+    async serviceNodes(serviceName: string, onlyHealthy: boolean = false): Promise<IServiceNode[]> {
+        let result: IServiceNode[] = this.servicesCache.get(serviceName);
+        if (!result) {
+            const health = this.consul.health; // this.consul.health.service
+            const healthNodes: any = await promisify(health.service.bind(health))(serviceName);
+            result = healthNodes.map((h: any) => {
+                const {ID, Address, Port, Status} = h.Service;
+                return {ID, Address, Port, Status};
+            }).filter((c: any) => c);
+            this.servicesCache.set(serviceName, result, 3); // refresh cache every second, racing may happen, delay can be up to 3 + ttl
         }
 
-        return client;
-    }
-
-    @DiscoverConsulDriver.FieldExist
-    async services() { // todo
-        const services: any = await new Promise((resolve, reject) =>
-            this.consul.catalog.service.list((err, result) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(result);
-            }));
-        return services;
-    }
-
-    @DiscoverConsulDriver.FieldExist
-    async serviceNodes(serviceName: string, onlyHealthy: boolean = false): Promise<IServiceNode[]> { // todo: cache
-        const health = this.consul.health; // this.consul.health.service
-        const healthNodes: any = await promisify(health.service.bind(health))(serviceName);
-        return healthNodes.map((h: any) => {
-            if (onlyHealthy && h.Checks.find((c: any) => c.Status !== "passing")) {
-                return;
-            }
-            const {ID, Address, Port, Status} = h.Service;
-            return {ID, Address, Port, Status};
-        }).filter((c: any) => c);
+        return onlyHealthy ? result.filter(c => c.Status === "passing") : result;
     }
 
     @DiscoverConsulDriver.FieldExist
@@ -363,7 +359,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         if (!service) {
             return NodeStatus.NOTEXIST;
         } else if (service.Status !== "passing") {
-            return NodeStatus.UNHEALTHY;
+            return NodeStatus.UNHEALTHY; // todo: is me ?
         } else {
             return NodeStatus.HEALTHY;
         }
