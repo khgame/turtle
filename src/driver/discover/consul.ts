@@ -336,16 +336,16 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
     @DiscoverConsulDriver.FieldExist
     async serviceNodes(serviceName: string, onlyHealthy: boolean = false): Promise<IServiceNode[]> {
-        let result: IServiceNode[] = this.servicesCache.get(serviceName);
-        if (!result) {
-            const health = this.consul.health; // this.consul.health.service
-            const healthNodes: any = await promisify(health.service.bind(health))(serviceName);
-            result = healthNodes.map((h: any) => {
-                const {ID, Address, Port, Status} = h.Service;
-                return {ID, Address, Port, Status};
-            }).filter((c: any) => c);
-            this.servicesCache.set(serviceName, result, 3); // refresh cache every second, racing may happen, delay can be up to 3 + ttl
-        }
+        let result: IServiceNode[] = await this.servicesCache.getLoosingCache(
+            serviceName,
+            async (name): Promise<IServiceNode[]> => {
+                const health = this.consul.health; // this.consul.health.service
+                const healthNodes: any = await promisify(health.service.bind(health))(name);
+                return healthNodes.map((h: any) => {
+                    const {ID, Address, Port, Status} = h.Service;
+                    return {ID, Address, Port, Status};
+                }).filter((c: any) => c);
+            }, 2); // refresh cache every second, racing may happen, delay can be up to 2 + ttl
 
         return onlyHealthy ? result.filter(c => c.Status === "passing") : result;
     }
