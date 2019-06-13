@@ -323,6 +323,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             serviceName,
             async (name) => {
                 const services = await this.serviceNodes(name, true);
+                // console.log("services", services);
                 const service = services[Math.floor(services.length * Math.random())];
                 return createHttpClient(`http://${service.address}:${service.port}`);
             },
@@ -345,11 +346,11 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                     const {ID, Address, Port} = h.Service;
                     return {
                         id: ID, address: Address, port: Port,
-                        passing: (h.Checks as any[]).findIndex((c: any) => c.Status !== "healthy") >= 0
+                        healthy: (h.Checks as any[]).findIndex((c: any) => c.Status !== "healthy") >= 0
                     };
                 }).filter((c: any) => c);
             }, 2); // refresh cache every second, racing may happen, delay can be up to 2 + ttl
-
+        // console.log("serviceNodes", result);
         return onlyHealthy ? result.filter(n => n.healthy) : result;
     }
 
