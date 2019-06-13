@@ -40,7 +40,8 @@ interface IServiceNode {
 
 enum NodeStatus {
     NOTEXIST,
-    UNHEALTHY,
+    UNHEALTHY_ME,
+    UNHEALTHY_OTHER,
     HEALTHY,
 }
 
@@ -157,7 +158,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
         }
 
         const exist = await this.selfStatus();
-        if (exist !== NodeStatus.NOTEXIST) {
+        if (exist === NodeStatus.HEALTHY || exist === NodeStatus.UNHEALTHY_OTHER) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
         }
 
@@ -355,17 +356,25 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async selfStatus(): Promise<NodeStatus> {
+    async getSelf(): Promise<IServiceNode | undefined> {
         const services = await this.serviceNodes(turtle.conf.name, false);
+        return services.find(t => t.id === this.id);
+    }
 
-        const service = services.find(t => t.id === this.id);
-
+    @DiscoverConsulDriver.FieldExist
+    async selfStatus(): Promise<NodeStatus> {
+        const service = await this.getSelf();
         if (!service) {
             return NodeStatus.NOTEXIST;
         } else if (service.healthy) {
             return NodeStatus.HEALTHY;
         } else {
-            return NodeStatus.UNHEALTHY; // todo: is me ?
+            if (service.address === turtle.runtime.ip && service.port === turtle.runtime.port) {
+                return NodeStatus.UNHEALTHY_ME;
+            } else {
+                return NodeStatus.UNHEALTHY_OTHER;
+            }
+
         }
     }
 
