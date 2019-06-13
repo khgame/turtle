@@ -157,9 +157,13 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             }
         }
 
-        const exist = await this.selfStatus();
-        if (exist === NodeStatus.HEALTHY || exist === NodeStatus.UNHEALTHY_OTHER) {
-            throw new Error(`consul driver startup failed: the service ${this.id} is already exist`);
+        const status = await this.selfStatus();
+        if (status === NodeStatus.HEALTHY || status === NodeStatus.UNHEALTHY_OTHER) {
+            throw new Error(`consul driver startup failed: the service ${this.id} is already exist(${status})`);
+        } else if (status === NodeStatus.UNHEALTHY_ME) {
+            this.log.warn(`unhealthy me ${this.id}(${status}) detected: override`);
+        } else {
+            this.log.info(`me ${this.id}(${status}) are not exist: start to register`);
         }
 
         let check, checks;
@@ -368,13 +372,10 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             return NodeStatus.NOTEXIST;
         } else if (service.healthy) {
             return NodeStatus.HEALTHY;
+        } else if (service.address === turtle.runtime.ip && service.port === turtle.runtime.port) {
+            return NodeStatus.UNHEALTHY_ME;
         } else {
-            if (service.address === turtle.runtime.ip && service.port === turtle.runtime.port) {
-                return NodeStatus.UNHEALTHY_ME;
-            } else {
-                return NodeStatus.UNHEALTHY_OTHER;
-            }
-
+            return NodeStatus.UNHEALTHY_OTHER;
         }
     }
 
