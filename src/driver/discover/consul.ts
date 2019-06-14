@@ -165,7 +165,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             }
         }
 
-        const status = await this.selfStatus();
+        const status = await this.getStatusSelf();
         if (status === NodeStatus.HEALTHY || status === NodeStatus.UNHEALTHY_OTHER) {
             throw new Error(`consul driver startup failed: the service ${this.id} is already exist(${status})`);
         } else if (status === NodeStatus.UNHEALTHY_ME) {
@@ -359,11 +359,6 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
-    async services() {
-        // todo
-    }
-
-    @DiscoverConsulDriver.FieldExist
     async serviceNodes(serviceName: string, onlyHealthy: boolean = false): Promise<IServiceNode[]> {
         let result: IServiceNode[] = await this.servicesCache.getLoosingCache(
             serviceName,
@@ -383,13 +378,35 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     }
 
     @DiscoverConsulDriver.FieldExist
+    async getServiceNames() {
+        const cat = this.consul.catalog;
+        const services = await promisify(cat.services.bind(cat))();
+        return Object.keys(services);
+    }
+
+    @DiscoverConsulDriver.FieldExist
+    async getServices(): Promise<{ [serviceName: string]: IServiceNode[] }> {
+        const serviceNames = await this.getServiceNames();
+        const ret: { [serviceName: string]: IServiceNode[] } = {};
+        await Promise.all(
+            serviceNames.map((sn) =>
+                (async () => {
+                    ret[sn] = await this.serviceNodes(sn, false);
+                })()
+            )
+        );
+        return ret;
+    }
+
+    @DiscoverConsulDriver.FieldExist
     async getSelf(): Promise<IServiceNode | undefined> {
         const services = await this.serviceNodes(turtle.conf.name, false);
         return services.find(t => t.id === this.id);
     }
 
+
     @DiscoverConsulDriver.FieldExist
-    async selfStatus(): Promise<NodeStatus> {
+    async getStatusSelf(): Promise<NodeStatus> {
         const service = await this.getSelf();
         if (!service) {
             return NodeStatus.NOTEXIST;
