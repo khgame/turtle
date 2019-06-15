@@ -21,7 +21,8 @@
     "prepublishOnly": "npm run build",
     "ep:api": "ts-node ./example/api",
     "ep:driver": "ts-node ./example/driver",
-    "ep:cli": "ts-node ./example/cli start"
+    "ep:cli": "ts-node ./example/cli start",
+    "ep:easyHealth": "ts-node ./example/easyHealth start"
   },
   "repository": {
     "type": "git",
