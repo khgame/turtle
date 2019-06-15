@@ -7,7 +7,7 @@ export class EasyHealth implements IApi {
     runningRequest: number;
     runningState: APIRunningState;
 
-    constructor(public readonly fnGetHealthState?: () => Promise<any>, public readonly url = "/api/health") {
+    constructor(public readonly fnGetHealthState?: () => Promise<any>, public readonly api = "api/health") {
         this.runningState = APIRunningState.PREPARED;
     }
 
@@ -41,7 +41,7 @@ export class EasyHealth implements IApi {
                 content += chunk;
             });
             request.on("end", async () => {
-                if (request.url !== this.url) {
+                if (request.url !== "/" + this.api) {
                     response.writeHead(404);
                     response.end();
                     return;
@@ -73,5 +73,27 @@ export class EasyHealth implements IApi {
         this.listen(port);
         this.runningState = APIRunningState.RUNNING;
         return true;
+    }
+
+    static async TurtleFastRun(
+        name: string,
+        port: number | number[],
+        id: number | string | Buffer = 0,
+        healthApi: string = "api/health",
+        fnGetHealthState?: () => Promise<any>) {
+        turtle.conf = {
+            name,
+            id,
+            port,
+            drivers: {
+                "discover/consul": {
+                    health: {
+                        api: healthApi
+                    }
+                }
+            }
+        };
+        await turtle.initialDrivers(["discover/consul"]);
+        await turtle.startAll(new EasyHealth(fnGetHealthState, healthApi));
     }
 }
