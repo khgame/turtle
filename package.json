@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "description": "An enterprise level javascript/typescript server framework.",
   "keywords": [
     "web",
