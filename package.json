@@ -44,6 +44,7 @@
     "@khgame/jsonrpc": "^0.1.7",
     "@khgame/one-line-call": "^0.1.5",
     "@types/consul": "^0.23.33",
+    "@types/socket.io": "^2.1.2",
     "axios": "^0.18.0",
     "bignumber.js": "^9.0.0",
     "elliptic": "^6.4.1",
@@ -56,6 +57,8 @@
     "node-cache": "^4.2.0",
     "path": "^0.12.7",
     "sha3": "^2.0.4",
+    "socket-controllers": "^0.0.5",
+    "socket.io": "^2.2.0",
     "typedi": "^0.8.0",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^3.8.0"
