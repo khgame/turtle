@@ -27,7 +27,7 @@ export interface IConsulConf {
     dc?: string;
     tags?: string[];
     did?: {
-        head_refresh?: "stable" | "process" | "dynamic"
+        head_refresh?: "process" | "stable" |  "dynamic"
     };
     request_fallback: {
         [key: string]: {
@@ -224,7 +224,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     async createServiceDIDHeader(): Promise<number> {
         const key = "service_did";
 
-        const headRefreshRule = this.conf && this.conf.did && this.conf.did.head_refresh ? this.conf.did.head_refresh : "stable";
+        const headRefreshRule = this.conf && this.conf.did && this.conf.did.head_refresh ? this.conf.did.head_refresh : "process";
         const didFilePath = Path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle.did`);
 
         if (headRefreshRule !== "dynamic") {
