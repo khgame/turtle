@@ -78,9 +78,9 @@ export class EasyHealth implements IApi {
     static async TurtleFastRun(
         name: string,
         port: number | number[],
+        fnGetHealthState?: () => Promise<any>,
         id: number | string | Buffer = 0,
-        healthApi: string = "api/health",
-        fnGetHealthState?: () => Promise<any>) {
+        healthApi: string = "api/health") {
         turtle.conf = {
             name,
             id,
