@@ -11,8 +11,6 @@ import {Runtime} from "./runtime";
 
 import {driverFactory} from "../core/driver/driverFactory";
 import {IWorker, WorkerRunningState} from "../core/worker";
-import {turtleVerbose} from "../core/utils/turtleVerbose";
-
 export class Turtle<IDrivers> {
 
     protected initialed: boolean;
@@ -155,7 +153,12 @@ export class Turtle<IDrivers> {
         );
     }
 
-
+    /**
+     * start the api
+     * @desc to start the api, the running state must be PREPARED|CLOSED, otherwise nothing will happen.
+     *       in the error situation (close failed or in wrong state), an Error will be thrown.
+     * @return {Promise<void>}
+     */
     protected async startApi(api: IApi) {
         let port: number;
         if (!turtle.conf.port) {
@@ -267,6 +270,12 @@ export class Turtle<IDrivers> {
     }
 
 
+    /**
+     * close the api
+     * @desc to close the api, the running state must be STARTING|RUNNING, otherwise nothing will happen.
+     *       in the error situation (close failed or in wrong state), an Error will be thrown.
+     * @return {Promise<void>}
+     */
     public async closeApi() {
         const api = this.api;
         switch (api.runningState) {
@@ -350,5 +359,7 @@ export class Turtle<IDrivers> {
         await this.closeApi();
     }
 }
+
+import {turtleVerbose} from "../core/utils/turtleVerbose";
 
 export const turtle = new Turtle<any>();
