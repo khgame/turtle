@@ -164,6 +164,11 @@
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-11.13.9.tgz#f80697caca7f7fb2526527a5c5a2743487f05ccc"
   integrity sha1-+AaXysp/f7JSZSelxaJ0NIfwXMw=
 
+"@types/socket.io-client@^1.4.32":
+  version "1.4.32"
+  resolved "https://registry.yarnpkg.com/@types/socket.io-client/-/socket.io-client-1.4.32.tgz#988a65a0386c274b1c22a55377fab6a30789ac14"
+  integrity sha512-Vs55Kq8F+OWvy1RLA31rT+cAyemzgm0EWNeax6BWF8H7QiiOYMJIdcwSDdm5LVgfEkoepsWkS+40+WNb7BUMbg==
+
 "@types/socket.io@^2.1.2":
   version "2.1.2"
   resolved "https://registry.npm.taobao.org/@types/socket.io/download/@types/socket.io-2.1.2.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fsocket.io%2Fdownload%2F%40types%2Fsocket.io-2.1.2.tgz#7165c2587cc3b86b44aa78e2a0060140551de211"
