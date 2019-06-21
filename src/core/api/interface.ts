@@ -8,9 +8,10 @@ export enum APIRunningState {
 }
 
 export interface IApi {
-    runningRequest: number;
 
-    enabled: boolean;
+    enabled?: boolean;
+    runningRequest?: number;
+
     runningState: APIRunningState;
 
     start(port: number) : Promise<boolean>;
