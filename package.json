@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "description": "An enterprise level javascript/typescript server framework.",
   "keywords": [
     "web",
@@ -43,9 +43,6 @@
   "dependencies": {
     "@khgame/jsonrpc": "^0.1.7",
     "@khgame/one-line-call": "^0.1.5",
-    "@types/consul": "^0.23.33",
-    "@types/socket.io": "^2.1.2",
-    "@types/socket.io-client": "^1.4.32",
     "axios": "^0.18.0",
     "bignumber.js": "^9.0.0",
     "elliptic": "^6.4.1",
@@ -63,6 +60,9 @@
     "winston-daily-rotate-file": "^3.8.0"
   },
   "devDependencies": {
+    "@types/consul": "^0.23.33",
+    "@types/socket.io": "^2.1.2",
+    "@types/socket.io-client": "^1.4.32",
     "@types/axios": "^0.14.0",
     "@types/chai": "^4.1.7",
     "@types/chalk": "^2.2.0",
