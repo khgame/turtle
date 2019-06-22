@@ -3,6 +3,67 @@ import * as socketIo from "socket.io";
 import {Logger} from "winston";
 import {genLogger} from "../logger";
 
+class UserSessionFactory {
+
+    protected sessionMap: { [uid: string]: UserSession } = {};
+
+    constructor(
+        protected readonly io: socketIo.Server,
+        public readonly heartbeatTimeOut: number = 10000,
+        public readonly checkStatusInterval = 30000) {
+    }
+
+    has(uid: string) {
+        return this.sessionMap.hasOwnProperty(uid);
+    }
+
+    get(uid: string): UserSession {
+        return this.sessionMap[uid];
+    }
+
+    create(socketId: string, uid: string) {
+        if (this.has(uid)) { // remove the old session
+            this.remove(uid);
+        }
+        return this.sessionMap[uid] = new UserSession(this.io, socketId, uid);
+    }
+
+    public remove(uid: string): boolean {
+        const session = this.get(uid);
+        if (!session) {
+            return false;
+        }
+        if (session.survive) {
+            session.socket.disconnect();
+        }
+        delete this.sessionMap[uid];
+        return true;
+    }
+
+    public heartBeat(uid: string) {
+
+        const session = this.get(uid);
+        if (!session) {
+            return false;
+        }
+        session.heartBeat();
+        return true;
+    }
+
+    public evictInactive() {
+        const now = Date.now();
+        for (const uid of Object.keys(this.sessionMap)) {
+            const session = this.sessionMap[uid];
+            if (now - session.lastHeartBeat > this.heartbeatTimeOut) {
+                this.remove(uid);
+            }
+        }
+        setTimeout(() => {
+            this.evictInactive();
+        }, this.checkStatusInterval);
+    }
+}
+
 class UserSession {
 
     lastHeartBeat: number;
@@ -31,9 +92,13 @@ class UserSession {
     }
 
     public heartBeat(): this {
+        if (!this.survive) {
+            throw new Error("cannot trigger heartBeat to a dead session.");
+        }
         this.lastHeartBeat = Date.now();
         return this;
     }
+
 
 }
 
@@ -44,9 +109,8 @@ export class WSServer {
         return this._log || (this._log = genLogger());
     }
 
-    private allSession: { [uid: string]: UserSession } = {};
-
-    private io: socketIo.Server;
+    protected sessions: UserSessionFactory;
+    protected io: socketIo.Server;
 
     constructor(public readonly server: Server,
                 public readonly validateToken: (token: string) => Promise<string | undefined>,
@@ -63,6 +127,7 @@ export class WSServer {
 
         try {
             this.io = require("socket.io")(this.server);
+            this.sessions = new UserSessionFactory(this.io, this.heartbeatTimeOut, this.checkStatusInterval);
         } catch (e) {
             throw new Error("socket.io package was not found installed. Try to install it: npm install socket.io --save");
         }
@@ -82,7 +147,7 @@ export class WSServer {
                 return false;
             }
 
-            const session = this.createSession(uid, socket.id);
+            const session = this.sessions.create(socket.id, uid);
             socket.emit("login", "SUCCESS");
 
             socket.on("message", (message: string) => {
@@ -90,11 +155,13 @@ export class WSServer {
             });
 
             socket.on("disconnect", (message: string) => {
-                this.removeSession(uid);
+                this.sessions.remove(uid);
             });
 
             socket.on("heartbeat", (message: string) => {
-                session.heartBeat().emit("heartbeat");
+                if (this.sessions.heartBeat(uid)) {
+                    this.sessions.get(uid).emit("heartbeat");
+                }
             });
 
             this.log.info(`ws connected, socket id : ${socket.id}`);
@@ -104,11 +171,11 @@ export class WSServer {
     }
 
     public emit(uid: string, message: any): this {
-        const session = this.allSession[uid];
-        if (!this.allSession[uid]) {
+        const session = this.sessions.get(uid);
+        if (!session) {
             this.log.error(`try emit message to uid ${uid}, but the session are not found`);
         }
-        if (this.allSession[uid].survive) {
+        if (session.survive) {
             this.log.error(`try emit message to uid ${uid}, but the session are not survive`);
         }
         session.emit("message", message); // todo: ???
@@ -116,15 +183,7 @@ export class WSServer {
     }
 
     public emitToUsers(uids: string[], message: any): this {
-        (uids || []).forEach(uid => {
-            if (!this.allSession[uid]) {
-                this.log.error(`try emit message to uid ${uid}, but the session are not found`);
-            }
-            if (this.allSession[uid].survive) {
-                this.log.error(`try emit message to uid ${uid}, but the session are not survive`);
-            }
-            this.allSession[uid].emit("message", message);
-        });
+        (uids || []).forEach(uid => this.emit(uid, message));
         return this;
     }
 
@@ -133,33 +192,7 @@ export class WSServer {
         return this;
     }
 
-    private removeSession(uid: string) {
-        if (!this.allSession[uid]) {
-            return false;
-        }
-        const session = this.allSession[uid];
-        if (session.survive) {
-            session.socket.disconnect();
-        }
-        delete this.allSession[uid];
-        return true;
-    }
-
-    private createSession(uid: string, socketId: string) {
-        this.removeSession(uid); // remove the old session
-        return this.allSession[uid] = new UserSession(this.io, socketId, uid);
-    }
-
     private checkStatus() {
-        const now = Date.now();
-        for (const uid of Object.keys(this.allSession)) {
-            const session = this.allSession[uid];
-            if (now - session.lastHeartBeat > this.heartbeatTimeOut) {
-                this.removeSession(uid);
-            }
-        }
-        setTimeout(() => {
-            this.checkStatus();
-        }, this.checkStatusInterval);
+        this.sessions.evictInactive();
     }
 }
