@@ -108,7 +108,7 @@ export function genLogger(label: string = "", options?: IFileTransportOption ): 
             format.timestamp({
                 format: "YYYY-MM-DD HH:mm:ss.SSS",
             }),
-            format.label({label})
+            format.label({label}),
         ),
         transports: t,
     });

@@ -5,5 +5,4 @@ export * from "./assert";
 export * from "./http";
 export * from "./memCache";
 export * from "./ws";
-export * from "./ws/wsClient";
 
