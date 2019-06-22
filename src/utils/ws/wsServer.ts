@@ -1,17 +1,60 @@
-import { Server } from "http";
+import {Server} from "http";
 import * as socketIo from "socket.io";
+import {Logger} from "winston";
+import {genLogger} from "../logger";
+
+class UserSession {
+
+    lastHeartBeat: number;
+
+    constructor(
+        protected readonly io: socketIo.Server,
+        public readonly socketId: string,
+        public readonly uid: string,
+    ) {
+        this.heartBeat();
+    }
+
+    public get socket(): socketIo.Socket {
+        return this.io.sockets.sockets[this.socketId];
+    }
+
+    public get survive(): boolean {
+        return this.io.sockets.sockets.hasOwnProperty(this.socketId);
+    }
+
+    public emit(event: string | symbol, ...args: any[]): boolean {
+        if (!this.survive) {
+            throw new Error("cannot emit event to a dead session.");
+        }
+        return this.socket.emit(event, ...args);
+    }
+
+    public heartBeat(): this {
+        this.lastHeartBeat = Date.now();
+        return this;
+    }
+
+}
 
 export class WSServer {
 
-    private allUserStatus: {
-        [uid: string]: {
-            token: string,
-            socketId: string,
-            timestamp: number,
-        };
-    } = {};
+    protected _log: Logger;
+    public get log(): Logger {
+        return this._log || (this._log = genLogger());
+    }
+
+    private allSession: { [uid: string]: UserSession } = {};
 
     private io: socketIo.Server;
+
+    constructor(public readonly server: Server,
+                public readonly validateToken: (token: string) => Promise<string | undefined>,
+                public readonly callback: (socket: socketIo.Socket, uid: string, message: string) => void,
+                public readonly heartbeatTimeOut: number = 10000,
+                public readonly checkStatusInterval = 30000) {
+        this.initial();
+    }
 
     protected initial() {
         if (!require) {
@@ -23,11 +66,14 @@ export class WSServer {
         } catch (e) {
             throw new Error("socket.io package was not found installed. Try to install it: npm install socket.io --save");
         }
+
         this.io.on("connection", async (socket: socketIo.Socket) => {
-            console.log("连接成功", socket.id);
+            this.log.info(`ws connected, socket id : ${socket.id}`);
 
             const token = socket.handshake.query.token;
+
             const uid = await this.validateToken(token);
+
             if (!uid) {
                 socket.emit("login", "FAILED");
                 setTimeout(() => {
@@ -35,106 +81,81 @@ export class WSServer {
                 }, 1000);
                 return false;
             }
-            this.login(uid, socket.id, token);
+
+            const session = this.createSession(uid, socket.id);
             socket.emit("login", "SUCCESS");
-            console.log("login成功", socket.id);
 
             socket.on("message", (message: string) => {
                 this.callback(socket, uid, message);
             });
 
             socket.on("disconnect", (message: string) => {
-                this.disconnect(uid);
+                this.removeSession(uid);
             });
+
             socket.on("heartbeat", (message: string) => {
-                const status = this.refreshStatus(uid, socket.id);
-                if (status) {
-                    socket.emit("heartbeat");
-                }
+                session.heartBeat().emit("heartbeat");
             });
+
+            this.log.info(`ws connected, socket id : ${socket.id}`);
         });
 
         return this.io;
     }
 
-    public emit(uid: string, message: any) {
-        const status = this.allUserStatus[uid];
-        if (!status) {
-            return false;
+    public emit(uid: string, message: any): this {
+        const session = this.allSession[uid];
+        if (!this.allSession[uid]) {
+            this.log.error(`try emit message to uid ${uid}, but the session are not found`);
         }
-        const socket = this.getSocket(status.socketId);
-        if (!socket) {
-            return false;
+        if (this.allSession[uid].survive) {
+            this.log.error(`try emit message to uid ${uid}, but the session are not survive`);
         }
-        return socket.emit("message", message);
+        session.emit("message", message); // todo: ???
+        return this;
     }
 
-    public emitToUsers(uids: string[], message: any) {
-        if (!uids || uids.length === 0) {
-            return;
-        }
-        uids.map(u => this.emit(u, message));
+    public emitToUsers(uids: string[], message: any): this {
+        (uids || []).forEach(uid => {
+            if (!this.allSession[uid]) {
+                this.log.error(`try emit message to uid ${uid}, but the session are not found`);
+            }
+            if (this.allSession[uid].survive) {
+                this.log.error(`try emit message to uid ${uid}, but the session are not survive`);
+            }
+            this.allSession[uid].emit("message", message);
+        });
+        return this;
     }
 
-    public emitToAll(message: any) {
+    public emitToAll(message: any): this {
         this.io.emit(message);
+        return this;
     }
 
-    constructor(public readonly server: Server,
-                public readonly validateToken: (token: string) => Promise<string | undefined>,
-                public readonly callback: (socket: socketIo.Socket, uid: string, message: string) => void,
-                public readonly heartbeatTimeOut: number = 10000,
-                public readonly checkStatusInterval = 30000) {
-        this.initial();
-    }
-    private getSocket(socketId: string): socketIo.Socket {
-        if (!this.io.sockets.sockets.hasOwnProperty(socketId)) {
-            return ;
-        }
-        return this.io.sockets.sockets[socketId];
-    }
-
-    private disconnect(uid: string) {
-        if (!this.allUserStatus[uid]) {
+    private removeSession(uid: string) {
+        if (!this.allSession[uid]) {
             return false;
         }
-        const socketId = this.allUserStatus[uid].socketId;
-        const socket = this.getSocket(socketId);
-        if (socket) {
-            socket.disconnect();
+        const session = this.allSession[uid];
+        if (session.survive) {
+            session.socket.disconnect();
         }
-        delete this.allUserStatus[uid];
-
+        delete this.allSession[uid];
         return true;
     }
 
-    private login(uid: string, socketId: string, token: string) {
-        this.disconnect(uid);
-        this.allUserStatus[uid] = {
-            token,
-            timestamp: Date.now(),
-            socketId
-        };
-    }
-
-    private refreshStatus(uid: string, socketId: string) {
-        const status = this.allUserStatus[uid];
-        if (!status) {
-            return false;
-        }
-        if (status.socketId !== socketId) {
-            return false;
-        }
-        status.timestamp = Date.now();
-        return true;
+    private createSession(uid: string, socketId: string) {
+        this.removeSession(uid); // remove the old session
+        return this.allSession[uid] = new UserSession(this.io, socketId, uid);
     }
 
     private checkStatus() {
-        const timestamp = Date.now();
-        for (const uid of Object.keys(this.allUserStatus)) {
-            const userStatus = this.allUserStatus[uid];
-            if (timestamp - userStatus.timestamp > this.heartbeatTimeOut) {
-                this.disconnect(uid);
+        const now = Date.now();
+        for (const uid of Object.keys(this.allSession)) {
+            const session = this.allSession[uid];
+            if (now - session.lastHeartBeat > this.heartbeatTimeOut) {
+                this.removeSession(uid);
             }
         }
         setTimeout(() => {

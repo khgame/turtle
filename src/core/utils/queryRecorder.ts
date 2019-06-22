@@ -8,7 +8,7 @@ export class QueryRecorder {
         const s = Math.floor(ms / 1000);
         const m = Math.floor(s / 60);
         const h = Math.floor(s / 60);
-        (new Date()).getDay()
+        (new Date()).getDay();
         this.records[m] = this.records[m] || {};
         this.records[m][queryName] = (this.records[m][queryName] || {});
         this.records[m][queryName]["timeCostMs"] = timeCostMs + (this.records[m][queryName]["timeCostMs"] || 0);
