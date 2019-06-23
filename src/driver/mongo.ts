@@ -1,4 +1,5 @@
 import {Driver, IDriverAdaptor} from "../core";
+import {ConnectionOptions} from "mongoose";
 
 export interface IMongoConf {
     host: string;
@@ -6,6 +7,7 @@ export interface IMongoConf {
     database: string;
     username?: string;
     password?: string;
+    options?: ConnectionOptions;
 }
 
 @Driver("mongo")
@@ -33,7 +35,7 @@ export class MongoDriver implements IDriverAdaptor<IMongoConf, any> {
             const authStr = username ? `${username}${password ? ":" + password : ""}@` : "";
             const mongodbUrl = `mongodb://${authStr}${host}${port ? ":" + port : ""}/${database || "khgame_login_svr"}`;
             const mongoose = this.loadMongoose();
-            mongoose.connect(mongodbUrl, {useNewUrlParser: true});
+            mongoose.connect(mongodbUrl, {useNewUrlParser: true, ... (conf.options || {})});
             mongoose.connection.on("connected", (err: any) => {
                 console.log("Mongoose connection open to " + mongodbUrl);
                 resolve(mongoose);
