@@ -1,7 +1,7 @@
-import {Server} from "http";
+import { Server } from "http";
 import * as socketIo from "socket.io";
-import {Logger} from "winston";
-import {genLogger} from "../logger";
+import { Logger } from "winston";
+import { genLogger } from "../logger";
 
 export class UserSessionFactory {
 
@@ -150,11 +150,13 @@ export class WSServer {
     protected io: socketIo.Server;
 
     constructor(public readonly server: Server,
-                public readonly validateToken: (token: string) => Promise<string | undefined>,
-                public readonly callback: (socket: socketIo.Socket, uid: string, message: string) => void,
-                public readonly heartbeatTimeOut: number = 180000) {
+        public readonly validateToken: (token: string) => Promise<string | undefined>,
+        public readonly callback: (socket: socketIo.Socket, uid: string, message: string) => void,
+        public readonly heartbeatTimeOut: number = 180000) {
         this.initial();
     }
+
+    private mockIdSeq = 0;
 
     protected initial() {
         if (!require) {
@@ -173,14 +175,11 @@ export class WSServer {
 
             const token = socket.handshake.query.token;
 
-            const uid = await this.validateToken(token);
+            let uid = await this.validateToken(token);
 
             if (!uid) {
                 socket.emit("login", "FAILED");
-                setTimeout(() => {
-                    socket.disconnect();
-                }, 1000);
-                return false;
+                uid = `mock_uid_${this.mockIdSeq++}`;
             }
 
             this.sessions.create(socket.id, uid);
