@@ -167,11 +167,11 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
 
         const status = await this.getStatusSelf();
         if (status === NodeStatus.HEALTHY || status === NodeStatus.UNHEALTHY_OTHER) {
-            throw new Error(`consul driver startup failed: the service ${this.id} is already exist(${status})`);
+            throw new Error(`consul driver startup failed: the service ${turtle.serviceId} is already exist(${status})`);
         } else if (status === NodeStatus.UNHEALTHY_ME) {
-            this.log.warn(`unhealthy me ${this.id}(${status}) detected: override`);
+            this.log.warn(`unhealthy me ${turtle.serviceId}(${status}) detected: override`);
         } else {
-            this.log.info(`me ${this.id}(${status}) are not exist: start to register`);
+            this.log.info(`me ${turtle.serviceId}(${status}) are not exist: start to register`);
         }
 
         let check, checks;
@@ -213,12 +213,9 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
                 throw new Error(`onApiClose: cannot reach the consul agent`);
             }
         }
-        await this.deregister(this.id);
+        await this.deregister(turtle.serviceId);
     }
 
-    get id() {
-        return `${turtle.conf.name}:${turtle.conf.id}`;
-    }
 
     @DiscoverConsulDriver.FieldExist
     async createServiceDIDHeader(): Promise<number> {
@@ -401,7 +398,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     @DiscoverConsulDriver.FieldExist
     async getSelf(): Promise<IServiceNode | undefined> {
         const services = await this.serviceNodes(turtle.conf.name, false);
-        return services.find(t => t.id === this.id);
+        return services.find(t => t.id === turtle.serviceId);
     }
 
 

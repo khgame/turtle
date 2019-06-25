@@ -3,7 +3,7 @@ import * as Path from "path";
 import * as fs from "fs-extra";
 import {turtle} from "../turtle";
 import {IApi, IWorker} from "../core";
-import {IConf} from "../conf/interfece";
+import {IConf} from "../conf/interface";
 import {CommandsAPI} from "../turtle/commands";
 import {Client} from "@khgame/jsonrpc/lib";
 

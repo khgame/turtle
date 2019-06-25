@@ -48,7 +48,7 @@ export class Runtime {
 
     save(){
         const p = path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
-        fs.writeFileSync(p, JSON.stringify(this, null, 2));
+        fs.writeFileSync(p, JSON.stringify({ ... this, service_id: turtle.serviceId}, null, 2));
         turtleVerbose("RUNTIME SAVED");
     }
 }

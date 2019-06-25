@@ -1,7 +1,7 @@
 import * as fs from "fs-extra";
 import * as Path from "path";
 
-import {IConf, ISetting} from "../conf/interfece";
+import {IConf, ISetting} from "../conf/interface";
 import {EventEmitter} from "events";
 import {IApi, APIRunningState} from "../core/api";
 import {exitLog, genLogger, Logger} from "../utils";
@@ -41,6 +41,10 @@ export class Turtle<IDrivers> {
     public api: IApi;
 
     public workers: IWorker[];
+
+    get serviceId() {
+        return `${this.conf.name}:${this.conf.id}`;
+    }
 
     constructor(){
         console.log(`
