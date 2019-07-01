@@ -15,12 +15,14 @@ export class Runtime {
     public cwd: string;
     public node_env: string;
     public pkg_version: string;
+    public in_dev: boolean;
 
     constructor(){
         this.initProcessInfo();
     }
 
     initProcessInfo() {
+        this.in_dev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
         this.ip = ip.address();
         this.pid = process.pid;
         this.cwd = process.cwd();
