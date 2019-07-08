@@ -1,4 +1,5 @@
 # env
+*.turtle
 .idea
 .DS_Store
 bench

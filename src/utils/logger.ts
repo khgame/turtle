@@ -38,11 +38,13 @@ export interface IFileTransportOption {
 function createFileTransport(label: string, options?: IFileTransportOption) {
     if (!turtle.conf) {
         console.error(`create transport error, turtle's config haven't been set`);
+        return;
     }
 
     let nameSpace = label ? label.split(":")[0] : "";
     nameSpace = nameSpace || "main";
     const fileName = `${nameSpace.replace(/[:,&|]/g, "-")}@%DATE%.log`;
+
     const logDir = ensureLogDir(
         ((options && options.prefix) ? `[${options.prefix.replace(/[:,&|]/g, "-")}]` : "+") +
         `${turtle.conf.name}#${turtle.conf.id}@${turtle.conf.port}`);
@@ -85,7 +87,7 @@ export function genLogger(label: string = "", options?: IFileTransportOption ): 
     if (loggers[label]) {
         return loggers[label];
     }
-    const inDev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
+    const inDev = turtle.runtime.in_dev;
     const t = [
         new transports.Console({
             level: inDev ? NPM_LOGGING_LEVELS.silly : (turtle.setting.log_prod_console || NPM_LOGGING_LEVELS.warn),

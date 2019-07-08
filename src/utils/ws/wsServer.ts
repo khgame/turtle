@@ -173,7 +173,7 @@ export class WSServer {
         this.io.on("connection", async (socket: socketIo.Socket) => {
             this.log.info(`ws connected, socket id : ${socket.id}`);
 
-            const token = socket.handshake.query.token;
+            const token = socket.handshake.query.token; // get this from your login server.
 
             let uid = await this.validateToken(token);
 

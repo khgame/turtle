@@ -1,4 +1,4 @@
-import {APIRunningState, IApi, turtle} from "../../src/";
+import {APIRunningState, CError, genAssert, IApi, turtle} from "../../src/";
 import * as Path from "path";
 
 /** ApiClass is an implementation of IApi */
@@ -40,5 +40,16 @@ async function start() {
 
 start().then(() => {
     console.log("service started");
+
+    let assert = genAssert("testPrefix");
+
+    try {
+        assert.cok(false, 123, () => "test");
+    } catch (ex) {
+        console.log((ex as CError).code);
+        console.log((ex as CError).message);
+        console.log((ex as CError).name);
+    }
+
 });
 

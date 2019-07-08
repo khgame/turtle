@@ -11,6 +11,7 @@ import {Runtime} from "./runtime";
 
 import {driverFactory} from "../core/driver/driverFactory";
 import {IWorker, WorkerRunningState} from "../core/worker";
+
 export class Turtle<IDrivers> {
 
     protected initialed: boolean;
@@ -28,7 +29,7 @@ export class Turtle<IDrivers> {
 
     public conf: IConf;
 
-    public rules<TRules>(): TRules {
+    public rules<TRules = any>(): TRules {
         return this.conf.rules as TRules;
     }
 
@@ -46,7 +47,7 @@ export class Turtle<IDrivers> {
         return `${this.conf.name}:${this.conf.id}`;
     }
 
-    constructor(){
+    constructor() {
         console.log(`
     ██████  ██  ██  ██████  ██████  ██      ██████
       ██    ██  ██  ██  ██    ██    ██      ██    
@@ -117,7 +118,7 @@ export class Turtle<IDrivers> {
     public async reload(sig?: string) {
         if (sig) {
             this.log.info(`★★ SIG ${sig} received, please hold ★★`);
-        }else {
+        } else {
             this.log.info(`★★ internal hup command received, please hold ★★`);
         }
         this.reloadConf();
