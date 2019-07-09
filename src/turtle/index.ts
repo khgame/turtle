@@ -213,43 +213,44 @@ export class Turtle<IDrivers> {
     }
 
     protected async startWorkers(workers: IWorker[]) {
-        if (!this.workers) {
+        if (!workers) {
             this.log.info(`there are no workers to start.`);
             return;
         }
+        this.workers = workers;
 
         for (let i = 0; i < workers.length; i++) {
             const worker = workers[i];
 
             switch (worker.runningState) {
                 case WorkerRunningState.NONE:
-                    throw new Error(`start worker failed: ${i} hasn't prepared.`);
+                    throw new Error(`start worker ${i}:${worker.name} failed: it hasn't prepared.`);
                 case WorkerRunningState.PREPARED:
                     if (await worker.start()) {
-                        this.log.info(`worker ${i} started.`);
+                        this.log.info(`worker ${i}:${worker.name} started.`);
                     } else {
-                        this.log.error(`worker ${i} cannot be start.`);
+                        this.log.error(`worker ${i}:${worker.name} cannot be start.`);
                     }
                     break;
                 case WorkerRunningState.STARTING:
-                    this.log.warn(`worker ${i} is in starting procedure, nothing changed.`);
+                    this.log.warn(`worker ${i}:${worker.name} is in starting procedure, nothing changed.`);
                     break;
                 case WorkerRunningState.RUNNING:
-                    this.log.warn(`worker ${i} is already in running procedure, nothing changed.`);
+                    this.log.warn(`worker ${i}:${worker.name} is already in running procedure, nothing changed.`);
                     break;
                 case WorkerRunningState.CLOSING:
-                    this.log.warn(`worker ${i} is in closing procedure, nothing changed.`);
+                    this.log.warn(`worker ${i}:${worker.name} is in closing procedure, nothing changed.`);
                     break;
                 case WorkerRunningState.CLOSED:
-                    this.log.info(`worker ${i} is already closed, try restart.`);
+                    this.log.info(`worker ${i}:${worker.name} is already closed, try restart.`);
                     if (await worker.start()) {
-                        this.log.info(`worker ${i} restarted.`);
+                        this.log.info(`worker ${i}:${worker.name} restarted.`);
                     } else {
-                        this.log.warn(`worker ${i} restart failed, is it restartable ?`);
+                        this.log.warn(`worker ${i}:${worker.name} restart failed, is it restartable ?`);
                     }
                     break;
                 default:
-                    throw new Error("start worker failed: unknown running state code.");
+                    throw new Error(`start worker ${i}:${worker.name} failed: unknown running state code.`);
             }
             worker.start();
         }

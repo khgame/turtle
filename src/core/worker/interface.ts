@@ -8,6 +8,9 @@ export enum WorkerRunningState {
 }
 
 export interface IWorker {
+
+    name: string;
+
     enabled: boolean;
     runningState: WorkerRunningState;
 
