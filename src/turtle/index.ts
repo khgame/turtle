@@ -217,54 +217,42 @@ export class Turtle<IDrivers> {
             this.log.info(`there are no workers to start.`);
             return;
         }
-        // todo
-        // let ports: number[];
-        // if (turtle.conf.port instanceof Array) {
-        //     ports = turtle.conf.port;
-        // } else {
-        //     ports = [turtle.conf.port];
-        // }
-        //
-        // for (const i in this.apis) {
-        //     if (!ports[i]) {
-        //         throw new Error(`api ${i} are not given ports`);
-        //     }
-        //
-        //     const api = this.apis[i];
-        //     switch (api.runningState) {
-        //         case ProcessRunningState.NONE:
-        //             throw new Error(`api ${i} hasn't prepared, cannot be start.`);
-        //         case ProcessRunningState.PREPARED:
-        //             if (await api.start(ports[i])) {
-        //                 this.log.info(`api ${i} started.`);
-        //             } else {
-        //                 this.log.error(`api ${i} cannot be start.`);
-        //             }
-        //             break;
-        //         case ProcessRunningState.STARTING:
-        //             this.log.warn(`api ${i} is in starting procedure, nothing changed.`);
-        //             break;
-        //         case ProcessRunningState.RUNNING:
-        //             this.log.warn(`api ${i} is already in running procedure, nothing changed.`);
-        //             break;
-        //         case ProcessRunningState.CLOSING:
-        //             this.log.warn(`api ${i} is in closing procedure, nothing changed.`);
-        //             break;
-        //         case ProcessRunningState.CLOSED:
-        //             this.log.info(`api ${i} is already closed, try restart.`);
-        //             if (await api.start(ports[i])) {
-        //                 this.log.info(`api ${i} restarted.`);
-        //             } else {
-        //                 this.log.warn(`api ${i} restart failed, is it restartable ?`);
-        //             }
-        //             break;
-        //         default:
-        //             throw new Error("unknown running state code.");
-        //     }
-        // }
-        //
 
+        for (let i = 0; i < workers.length; i++) {
+            const worker = workers[i];
 
+            switch (worker.runningState) {
+                case WorkerRunningState.NONE:
+                    throw new Error(`start worker failed: ${i} hasn't prepared.`);
+                case WorkerRunningState.PREPARED:
+                    if (await worker.start()) {
+                        this.log.info(`worker ${i} started.`);
+                    } else {
+                        this.log.error(`worker ${i} cannot be start.`);
+                    }
+                    break;
+                case WorkerRunningState.STARTING:
+                    this.log.warn(`worker ${i} is in starting procedure, nothing changed.`);
+                    break;
+                case WorkerRunningState.RUNNING:
+                    this.log.warn(`worker ${i} is already in running procedure, nothing changed.`);
+                    break;
+                case WorkerRunningState.CLOSING:
+                    this.log.warn(`worker ${i} is in closing procedure, nothing changed.`);
+                    break;
+                case WorkerRunningState.CLOSED:
+                    this.log.info(`worker ${i} is already closed, try restart.`);
+                    if (await worker.start()) {
+                        this.log.info(`worker ${i} restarted.`);
+                    } else {
+                        this.log.warn(`worker ${i} restart failed, is it restartable ?`);
+                    }
+                    break;
+                default:
+                    throw new Error("start worker failed: unknown running state code.");
+            }
+            worker.start();
+        }
         turtleVerbose("WORKERS STARTED");
     }
 

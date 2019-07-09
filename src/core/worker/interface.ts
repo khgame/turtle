@@ -11,6 +11,9 @@ export interface IWorker {
     enabled: boolean;
     runningState: WorkerRunningState;
 
-    start(port: number) : Promise<boolean>;
+    start() : Promise<boolean>;
     close() : Promise<boolean>;
+
+    onStart() : Promise<boolean>;
+    onClose() : Promise<boolean>;
 }
