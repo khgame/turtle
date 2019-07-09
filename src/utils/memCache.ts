@@ -47,11 +47,12 @@ export function genMemCache(options?: NodeCache.Options): IMemCache {
         // locked by me or cache failed. when it triggered by cache-failed, racing may happen.
         try {
             value = await fnGetVal(key);
-        } catch {
+        } catch (ex) {
+            throw new Error(`get loosing cache of key ${key} error: ${ex.message} stack: ${ex.stack}`);
         }
 
-        if (value === undefined) {
-            throw new Error(`get loosing cache of key ${key} error`);
+        if (value === undefined) { // todo: some times error - when consul failed ?
+            return undefined; // if returns undefined, cache will do nothing, acquire lock will be hold until timeout
         }
 
         // update loosing cache
