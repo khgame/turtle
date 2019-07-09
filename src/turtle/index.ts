@@ -219,6 +219,10 @@ export class Turtle<IDrivers> {
         }
         this.workers = workers;
 
+        const started = [];
+        const failed = [];
+        const error = [];
+
         for (let i = 0; i < workers.length; i++) {
             const worker = workers[i];
 
@@ -226,10 +230,17 @@ export class Turtle<IDrivers> {
                 case WorkerRunningState.NONE:
                     throw new Error(`start worker ${i}:${worker.name} failed: it hasn't prepared.`);
                 case WorkerRunningState.PREPARED:
-                    if (await worker.start()) {
-                        this.log.info(`worker ${i}:${worker.name} started.`);
-                    } else {
-                        this.log.error(`worker ${i}:${worker.name} cannot be start.`);
+                    try {
+                        if (await worker.start()) {
+                            this.log.info(`worker ${i}:${worker.name} started.`);
+                            started.push(worker.name);
+                        } else {
+                            this.log.error(`worker ${i}:${worker.name} cannot be start.`);
+                            failed.push(worker.name);
+                        }
+                    } catch (e) {
+                        this.log.info(`worker ${i}:${worker.name} start error. ${e}`);
+                        error.push(worker.name);
                     }
                     break;
                 case WorkerRunningState.STARTING:
@@ -243,16 +254,33 @@ export class Turtle<IDrivers> {
                     break;
                 case WorkerRunningState.CLOSED:
                     this.log.info(`worker ${i}:${worker.name} is already closed, try restart.`);
-                    if (await worker.start()) {
-                        this.log.info(`worker ${i}:${worker.name} restarted.`);
-                    } else {
-                        this.log.warn(`worker ${i}:${worker.name} restart failed, is it restartable ?`);
+                    try {
+                        if (await worker.start()) {
+                            this.log.info(`worker ${i}:${worker.name} restarted.`);
+                            started.push(worker.name);
+                        } else {
+                            this.log.warn(`worker ${i}:${worker.name} restart failed, is it restartable ?`);
+                            failed.push(worker.name);
+                        }
+                    } catch (e) {
+                        this.log.info(`worker ${i}:${worker.name}  start error. ${e}`);
+                        error.push(worker.name);
                     }
                     break;
                 default:
                     throw new Error(`start worker ${i}:${worker.name} failed: unknown running state code.`);
             }
             worker.start();
+        }
+        const logs = [];
+        if (started.length > 0) {
+            logs.push(started.reduce((n, p) => p + " " + n, "started:"));
+        }
+        if (failed.length > 0) {
+            logs.push(failed.reduce((n, p) => p + " " + n, "failed:"));
+        }
+        if (error.length > 0) {
+            logs.push(error.reduce((n, p) => p + " " + n, "error:"));
         }
         turtleVerbose("WORKERS STARTED");
     }

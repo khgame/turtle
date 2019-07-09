@@ -6,7 +6,7 @@ export * from "./interface";
 
 export abstract class Worker implements IWorker {
     enabled: boolean;
-    runningState: WorkerRunningState;
+    runningState: WorkerRunningState = WorkerRunningState.NONE;
 
     public log: Logger;
 
