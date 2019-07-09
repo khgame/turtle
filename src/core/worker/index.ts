@@ -20,12 +20,12 @@ export abstract class Worker implements IWorker {
         try {
             if (await this.onStart()) {
                 this.log.info(`※※ All Process Started ※※`);
-                this.runningState = WorkerRunningState.CLOSED;
+                this.runningState = WorkerRunningState.RUNNING;
                 this.enabled = true;
                 return true;
             } else {
                 this.log.info(`※※ All Worker Started ※※`);
-                this.runningState = WorkerRunningState.RUNNING;
+                this.runningState = WorkerRunningState.CLOSED;
                 return false;
             }
         } catch (e) {
@@ -41,11 +41,15 @@ export abstract class Worker implements IWorker {
         try {
             this.enabled = false;
             this.log.info("- close worker ✓");
-            await this.onClose();
-            this.log.info("※※ application exited ※※");
-            this.log.close();
-            this.runningState = WorkerRunningState.CLOSED;
-            return true;
+            if(await this.onClose()) {
+                this.log.info("※※ application exited ※※");
+                this.log.close();
+                this.runningState = WorkerRunningState.RUNNING;
+                return true;
+            }else{
+                this.runningState = WorkerRunningState.CLOSED;
+                return false;
+            }
         } catch (e) {
             this.log.error(`※※ shutdown application failed ※※ ${e}`);
             this.runningState = WorkerRunningState.RUNNING;

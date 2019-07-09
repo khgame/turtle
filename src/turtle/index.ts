@@ -282,7 +282,7 @@ export class Turtle<IDrivers> {
         if (error.length > 0) {
             logs.push(error.reduce((n, p) => p + " " + n, "error:"));
         }
-        turtleVerbose("WORKERS STARTED");
+        turtleVerbose("WORKERS STARTED", ...logs);
     }
 
     public async startAll(api: IApi, workers?: IWorker[]) {
