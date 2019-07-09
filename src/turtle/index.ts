@@ -270,17 +270,16 @@ export class Turtle<IDrivers> {
                 default:
                     throw new Error(`start worker ${i}:${worker.name} failed: unknown running state code.`);
             }
-            worker.start();
         }
         const logs = [];
         if (started.length > 0) {
-            logs.push(started.reduce((n, p) => p + " " + n, "started:"));
+            logs.push(started.reduce((p, n) => p + " " + n, "started:"));
         }
         if (failed.length > 0) {
-            logs.push(failed.reduce((n, p) => p + " " + n, "failed:"));
+            logs.push(failed.reduce((p, n) => p + " " + n, "failed:"));
         }
         if (error.length > 0) {
-            logs.push(error.reduce((n, p) => p + " " + n, "error:"));
+            logs.push(error.reduce((p, n) => p + " " + n, "error:"));
         }
         turtleVerbose("WORKERS STARTED", ...logs);
     }
