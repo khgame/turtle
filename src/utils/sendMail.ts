@@ -1,4 +1,4 @@
-interface IMailOption {
+export interface IMailOption {
     host: string;
     port?: number;
     secureConnection?: boolean;
@@ -7,7 +7,6 @@ interface IMailOption {
         pass: string,
     };
 }
-
 
 class MailSender {
 
