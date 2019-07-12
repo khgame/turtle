@@ -5,3 +5,4 @@ export * from "./driver";
 export * from "./api";
 export * from "./turtle";
 export * from "./utils";
+export * from "./testing";
