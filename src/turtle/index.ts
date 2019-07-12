@@ -164,7 +164,7 @@ export class Turtle<IDrivers> {
      *       in the error situation (close failed or in wrong state), an Error will be thrown.
      * @return {Promise<void>}
      */
-    protected async startApi(api: IApi) {
+    protected async startApi(api: IApi): Promise<this> {
         let port: number;
         if (!turtle.conf.port) {
             port = await getPort();
@@ -175,6 +175,12 @@ export class Turtle<IDrivers> {
                 throw new Error(`startApi: ports are occupied, ${ports}. avaliable: ${port}`);
             }
         }
+
+        if (this.api && api !== this.api) {
+            this.log.warn(`there are another registered api, nothing will happen.`);
+            return this;
+        }
+
         switch (api.runningState) {
             case APIRunningState.NONE:
                 throw new Error(`api service hasn't prepared, cannot be start.`);
@@ -210,21 +216,30 @@ export class Turtle<IDrivers> {
         await driverFactory.triggerApiStart();
 
         turtleVerbose("API STARTED", `serve at: http://${turtle.runtime.ip}:${turtle.runtime.port}`);
+        return this;
     }
 
-    protected async startWorkers(workers: IWorker[]) {
+    protected async startWorkers(workers: IWorker[]): Promise<this> {
         if (!workers) {
             this.log.info(`there are no workers to start.`);
-            return;
+            return this;
         }
-        this.workers = workers;
+
+        this.workers = this.workers || [];
+        workers.forEach(w => {
+            if (this.workers.indexOf(w) < 0) {
+                this.workers.push(w);
+            } else {
+                this.log.warn(`worker ${w.name} is already in the running list`);
+            }
+        });
 
         const started = [];
         const failed = [];
         const error = [];
 
-        for (let i = 0; i < workers.length; i++) {
-            const worker = workers[i];
+        for (let i = 0; i < this.workers.length; i++) {
+            const worker = this.workers[i];
 
             switch (worker.runningState) {
                 case WorkerRunningState.NONE:
@@ -282,6 +297,7 @@ export class Turtle<IDrivers> {
             logs.push(error.reduce((p, n) => p + " " + n, "error:"));
         }
         turtleVerbose("WORKERS STARTED", ...logs);
+        return this;
     }
 
     public async startAll(api: IApi, workers?: IWorker[]) {
