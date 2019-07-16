@@ -161,5 +161,11 @@ cli.run();
 > [this is an example](https://github.com/khgame/turtle/blob/master/example/cli/index.ts)  
 > and you can clone the repo, and run `npm run ep:cli --help` to test it by your self
 
+## using cli to create project
+
+`npm i -g @khgame/turtle`
+`turtle init`
+
+
 
 
