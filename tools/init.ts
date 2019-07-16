@@ -39,6 +39,15 @@ function packageJson(
         },
         dependencies: {
             "@khgame/turtle": "^0.0.50",
+        },
+        devDependencies: {
+            "chai": "^4.2.0",
+            "cross-env": "^5.2.0",
+            "nodemon": "^1.18.10",
+            "rimraf": "^2.6.3",
+            "ts-node": "^8.0.3",
+            "tslint": "^5.15.0",
+            "typescript": "^3.4.2"
         }
     };
 
@@ -46,10 +55,12 @@ function packageJson(
         conf.dependencies["mongodb"] = "^3.2.3";
         conf.dependencies["mongoose"] = "^5.5.0";
         conf.dependencies["mongoose-long"] = "^0.2.1";
+        conf.dependencies["@types/mongoose"] = "^5.3.17";
     }
 
     if (drivers.indexOf("redis") >= 0) {
         conf.dependencies["ioredis"] = "^4.9.0";
+        conf.dependencies["@types/ioredis"] = "^4.0.10";
     }
 
     if (drivers.indexOf("discover/consul") >= 0) {
@@ -127,7 +138,7 @@ export const init = {
         const keywordsStr: string = await ConsoleHelper.question("keywords: ") as string;
         const author: string = await ConsoleHelper.question("author: ") as string;
         const license: string = await ConsoleHelper.question("license (MIT): ") as string || "MIT";
-        const driversStr: string = await ConsoleHelper.question("drivers: ") as string || "";
+        const driversStr: string = await ConsoleHelper.question("drivers (mongo redis discover/consul): ") as string || "";
         const drivers: string[] = driversStr.split(" ").filter(v => !!v);
 
         const template: string = await ConsoleHelper.question("template: ") as string || "web-api";
@@ -148,7 +159,7 @@ export const init = {
             const apiIndexPath = path.resolve(apiPath, `index.ts`);
             fs.ensureDirSync(srcPath);
             fs.writeFileSync(defaultConfPath, `
-export const defaultConf = ${JSON.stringify(defaultConf(name, port, drivers))}`);
+export const defaultConf = ${JSON.stringify(defaultConf(name, port, drivers), null, 4)}`);
             fs.ensureDirSync(apiPath);
             fs.writeFileSync(apiIndexPath, `
 import {genLogger, IApi, APIRunningState, CError} from "@khgame/turtle/lib";
@@ -178,9 +189,6 @@ import {CommandLineApp} from "@khgame/turtle/lib";
 /** you should implement this (or using template) 
 import {Api} from "./api";
 */
-
-import * as controllers from "./controllers";
-import {IHiggsInfo} from "./const/IHiggsInfo";
 
 const cli = new CommandLineApp(
     "${name}",
