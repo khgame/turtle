@@ -14,11 +14,15 @@
     "framework"
   ],
   "main": "lib/index.js",
+  "bin": {
+    "turtle": "bin/index.js"
+  },
   "scripts": {
     "build": "rimraf ./lib && npx tsc",
+    "build:tools": "rimraf ./bin && npx tsc -b ./tsconfig.tools.json",
     "lint": "npx tslint --fix --project .",
     "test": "mocha -r ts-node/register test/**/*.test.ts --exit",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build && npm run build:tools",
     "ep:api": "ts-node ./example/api",
     "ep:driver": "ts-node ./example/driver",
     "ep:cli": "ts-node ./example/cli start",
@@ -87,6 +91,7 @@
     "typescript": "^3.4.2"
   },
   "files": [
-    "lib"
+    "lib",
+    "bin"
   ]
 }
