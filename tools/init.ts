@@ -55,12 +55,12 @@ function packageJson(
         conf.dependencies["mongodb"] = "^3.2.3";
         conf.dependencies["mongoose"] = "^5.5.0";
         conf.dependencies["mongoose-long"] = "^0.2.1";
-        conf.dependencies["@types/mongoose"] = "^5.3.17";
+        conf.devDependencies["@types/mongoose"] = "^5.3.17";
     }
 
     if (drivers.indexOf("redis") >= 0) {
         conf.dependencies["ioredis"] = "^4.9.0";
-        conf.dependencies["@types/ioredis"] = "^4.0.10";
+        conf.devDependencies["@types/ioredis"] = "^4.0.10";
     }
 
     if (drivers.indexOf("discover/consul") >= 0) {
@@ -153,6 +153,8 @@ export const init = {
                 spaces: 2
             });
             const srcPath = path.resolve(process.cwd(), `src`);
+            const lintPath = path.resolve(process.cwd(), `tslint.json`);
+            const tsconfigPath = path.resolve(process.cwd(), `tsconfig.json`);
             const defaultConfPath = path.resolve(srcPath, `defaultConf.ts`);
             const indexPath = path.resolve(srcPath, `index.ts`);
             const apiPath = path.resolve(srcPath, `api`);
@@ -164,39 +166,156 @@ export const defaultConf = ${JSON.stringify(defaultConf(name, port, drivers), nu
             fs.writeFileSync(apiIndexPath, `
 import {genLogger, IApi, APIRunningState, CError} from "@khgame/turtle/lib";
 
-export class API implements IApi {
+export class Api implements IApi {
 
     log = genLogger("api");
     
-    runningState: APIRunningState;
     
+    runningState: APIRunningState = APIRunningState.NONE;
+    
+    constructor() {
+        this.initial();
+    }
+
+    async initial() {
+        /** do initial procedure here */
+        this.runningState = APIRunningState.PREPARED;
+    }
+
     async start(port: number) {
+        this.runningState = APIRunningState.STARTING;
         this.log.info('api started');
+        this.runningState = APIRunningState.RUNNING;
+        this.log.info('★★★ HELLO WORLD ★★★');
         return true;
     };
     
     async close() {
+        this.runningState = APIRunningState.CLOSING;
         this.log.info('api closed');
-        return false;
+        this.runningState = APIRunningState.CLOSED;
+        return true;
     };
             
 }
 `);
             fs.writeFileSync(indexPath, `
 import {defaultConf} from "./defaultConf";
-import {CommandLineApp} from "@khgame/turtle/lib";
+import {CommandLineApp, IConf} from "@khgame/turtle/lib";
 
-/** you should implement this (or using template) 
+/** you should implement this (or using template) */
 import {Api} from "./api";
-*/
 
 const cli = new CommandLineApp(
     "${name}",
     "${version}",
     ${JSON.stringify(drivers)},
     () => new Api(),
-    [], defaultConf);
+    [], defaultConf as IConf);
 cli.run();`);
+
+            fs.writeFileSync(lintPath, `
+{
+  "linterOptions": {
+    "autoFixOnSave": true,
+    "exclude": [
+      "node_modules/**/*.ts"
+    ]
+  },
+  "rules": {
+    "array-type": [true, "array-simple"],
+    "arrow-return-shorthand": true,
+    "curly": true,
+    "comment-format": [
+      true,
+      "check-space"
+    ],
+    "quotemark": true,
+    "forin": false,
+    "indent": [true, "spaces", 4],
+    "interface-name": true,
+    "jsdoc-format": true,
+    "new-parens": true,
+    "no-angle-bracket-type-assertion": true,
+    "no-construct": true,
+    "no-console": false,
+    "no-empty": false,
+    "no-empty-interface": false,
+    "no-var-keyword": true,
+    "no-shadowed-variable": true,
+    "label-position": true,
+    "max-line-length": [
+      true,
+      180
+    ],
+    "object-literal-sort-keys": false,
+    "prefer-for-of": false,
+    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "switch-default": true,
+    "triple-equals": [
+      true,
+      "allow-null-check"
+    ],
+    "use-isnan": true,
+    "variable-name": {
+      "options": [
+        "ban-keywords",
+        "check-format",
+        "allow-pascal-case",
+        "allow-leading-underscore",
+        "allow-trailing-underscore",
+        "allow-snake-case"
+      ]
+    },
+    "whitespace": [
+      true,
+      "check-branch",
+      "check-decl",
+      "check-operator",
+      "check-separator",
+      "check-type"
+    ]
+  }
+}
+`);
+
+            fs.writeFileSync(tsconfigPath, `
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "types/*"
+      ]
+    },
+    "module": "commonjs",
+    "target": "es2015",
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": "bin",
+    "sourceMap": true,
+    "strict": true,
+    "declaration": true,
+    "strictPropertyInitialization": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+`);
+
+            console.log(`project ${name} created, some useful commands listed below:
+1. to initial your project, run 'npm install' or 'yarn install'
+2. to build your project, run 'npm run build' or 'yarn build'
+3. to start your project, run 'npm run start' or 'yarn start' 
+            `);
         }
 
     }
