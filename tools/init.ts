@@ -10,9 +10,10 @@ function packageJson(
     keywords: string[],
     author: string,
     license: string,
+    drivers: string[],
     template: string
 ) {
-    return {
+    const conf: any = {
         name: name,
         version: version,
         description: desc,
@@ -38,29 +39,29 @@ function packageJson(
         },
         dependencies: {
             "@khgame/turtle": "^0.0.50",
-            "axios": "^0.18.0",
-            "fs-extra": "^7.0.1",
-            "get-port": "^5.0.0",
-            "ioredis": "^4.9.0",
-            "ip": "^1.1.5",
-            "kcors": "^2.2.2",
-            "kht": "^0.0.9",
-            "koa": "^2.7.0",
-            "koa-bodyparser": "^4.2.1",
-            "koa-logger": "^3.2.0",
-            "koa-router": "^7.4.0",
-            "mongodb": "^3.2.3",
-            "mongoose": "^5.5.0",
-            "mongoose-long": "^0.2.1",
-            "path": "^0.12.7",
-            "routing-controllers": "^0.7.7",
-            "typedi": "^0.8.0"
         }
     };
+
+    if (drivers.indexOf("mongo") >= 0) {
+        conf.dependencies["mongodb"] = "^3.2.3";
+        conf.dependencies["mongoose"] = "^5.5.0";
+        conf.dependencies["mongoose-long"] = "^0.2.1";
+    }
+
+    if (drivers.indexOf("redis") >= 0) {
+        conf.dependencies["ioredis"] = "^4.9.0";
+    }
+
+    if (drivers.indexOf("discover/consul") >= 0) {
+        conf.dependencies["consul"] = "^4.9.0";
+    }
+
+
+    return conf;
 }
 
 function defaultConf(name: string, port: string, drivers: string[]) {
-    return {
+    const conf: any = {
         name: name, // charge_center_higgs
         id: 0,
         port: parseInt(port),
@@ -68,6 +69,41 @@ function defaultConf(name: string, port: string, drivers: string[]) {
         drivers: {},
         rules: {}
     };
+
+    if (drivers.indexOf("mongo") >= 0) {
+        conf.drivers["mongo"] = {
+            host: "127.0.0.1",
+            port: 27017,
+            database: name,
+            username: "",
+            password: ""
+        };
+    }
+
+    if (drivers.indexOf("redis") >= 0) {
+        conf.drivers["redis"] = {
+            db: 0,
+            family: 4,
+            host: "127.0.0.1",
+            port: 6379,
+            keyPrefix: `turtle:${name}:`,
+            key_mutex_wait_threshold: 100
+        };
+    }
+
+    if (drivers.indexOf("discover/consul") >= 0) {
+        conf.drivers["discover/consul"] = {
+            optional: false,
+            health: {
+                api: "api/v1/core/health"
+            },
+            did: {
+                "head_refresh": "process"
+            }
+        };
+    }
+
+    return conf;
 }
 
 export const init = {
@@ -79,9 +115,6 @@ export const init = {
     },
     exec: async (data: { repo: string }) => {
         const pkgPath = path.resolve(process.cwd(), `package.json`);
-        const srcPath = path.resolve(process.cwd(), `src`);
-        const defaultConfPath = path.resolve(srcPath, `defaultConf.ts`);
-        const indexPath = path.resolve(srcPath, `index.ts`);
         if (fs.existsSync(pkgPath)) {
             console.log(`[ERROR] package file ${pkgPath} is already exist.`);
             return;
@@ -104,18 +137,47 @@ export const init = {
         }
 
         if (!fs.existsSync(pkgPath)) {
-            const json = packageJson(name, version, desc, repo, keywordsStr.split(" ").filter(v => !!v), author, license, template);
+            const json = packageJson(name, version, desc, repo, keywordsStr.split(" ").filter(v => !!v), author, license, drivers, template);
             fs.writeJSONSync(pkgPath, json, {
                 spaces: 2
             });
+            const srcPath = path.resolve(process.cwd(), `src`);
+            const defaultConfPath = path.resolve(srcPath, `defaultConf.ts`);
+            const indexPath = path.resolve(srcPath, `index.ts`);
+            const apiPath = path.resolve(srcPath, `api`);
+            const apiIndexPath = path.resolve(apiPath, `index.ts`);
             fs.ensureDirSync(srcPath);
+            fs.writeFileSync(defaultConfPath, `
+export const defaultConf = ${JSON.stringify(defaultConf(name, port, drivers))}`);
+            fs.ensureDirSync(apiPath);
+            fs.writeFileSync(apiIndexPath, `
+import {genLogger, IApi, APIRunningState, CError} from "@khgame/turtle/lib";
 
+export class API implements IApi {
 
-            fs.writeFileSync(defaultConfPath, `export const defaultConf = ${JSON.stringify(defaultConf(name, port, drivers))}`);
+    log = genLogger("api");
+    
+    runningState: APIRunningState;
+    
+    async start(port: number) {
+        this.log.info('api started');
+        return true;
+    };
+    
+    async close() {
+        this.log.info('api closed');
+        return false;
+    };
+            
+}
+`);
             fs.writeFileSync(indexPath, `
 import {defaultConf} from "./defaultConf";
 import {CommandLineApp} from "@khgame/turtle/lib";
+
+/** you should implement this (or using template) 
 import {Api} from "./api";
+*/
 
 import * as controllers from "./controllers";
 import {IHiggsInfo} from "./const/IHiggsInfo";
