@@ -45,6 +45,26 @@ class MailSender {
 
         return await transporter.sendMail(message);
     }
+
+    public async sendMailHtml(
+        from_name: string,
+        from_email: string,
+        to_email: string,
+        subject: string,
+        content: string,
+        option: IMailOption) {
+        let message = {
+            to: to_email,
+            subject: subject,
+            html: content
+        };
+
+        const transporter = this.nodeMailer.createTransport(option, {
+            from: `"${from_name}" <${from_email}>`,
+        });
+
+        return await transporter.sendMail(message);
+    }
 }
 
 

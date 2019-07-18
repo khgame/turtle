@@ -39,7 +39,7 @@ export interface IConsulConf {
     };
 }
 
-interface IServiceNode {
+export interface IServiceNode {
     id: string;
     address: string;
     port: number;
