@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.53",
+  "version": "0.0.54",
   "description": "An enterprise level javascript/typescript server framework.",
   "keywords": [
     "web",
@@ -50,6 +50,7 @@
     "@khgame/one-line-call": "^0.1.5",
     "axios": "^0.18.0",
     "bignumber.js": "^9.0.0",
+    "commander": "^2.20.0",
     "elliptic": "^6.4.1",
     "fs-extra": "^7.0.1",
     "get-port": "^5.0.0",
