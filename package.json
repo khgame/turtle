@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.54",
+  "version": "0.0.55",
   "description": "An enterprise level javascript/typescript server framework.",
   "keywords": [
     "web",
@@ -66,7 +66,6 @@
     "winston-daily-rotate-file": "^3.8.0"
   },
   "devDependencies": {
-    "@types/axios": "^0.14.0",
     "@types/chai": "^4.1.7",
     "@types/chalk": "^2.2.0",
     "@types/consul": "^0.23.33",
