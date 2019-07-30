@@ -9,6 +9,8 @@ import {turtleVerbose} from "../core/utils/turtleVerbose";
 
 export class Runtime {
 
+    public turtle_cli_version = 1; // for tools usage
+
     // env
     public cwd: string;
     public node_env: string;
