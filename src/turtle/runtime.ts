@@ -28,6 +28,7 @@ export class Runtime {
     public init_time: Date;
     public cmd_port: number;
     public port: number;
+    public start_cmd: string[];
 
     // todo: enabled status
     // todo: worker status
@@ -53,6 +54,7 @@ export class Runtime {
 
     initRuntimeInfo() {
         this.init_time = new Date();
+        this.start_cmd = process.argv;
     }
 
     async listenCommands() {
