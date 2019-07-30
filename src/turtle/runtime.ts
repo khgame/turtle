@@ -8,26 +8,51 @@ import * as fs from "fs-extra";
 import {turtleVerbose} from "../core/utils/turtleVerbose";
 
 export class Runtime {
-    public port: number;
-    public cmd_port: number;
-    public ip: string;
-    public pid: number;
+
+    // env
     public cwd: string;
     public node_env: string;
     public pkg_version: string;
     public in_dev: boolean;
 
+    // process info
+    public ip: string;
+    public pid: number;
+
+    // static info
+    public name: string;
+    public id: string | number | Buffer;
+    public server_id: string;
+
+    // runtime info
+    public init_time: Date;
+    public cmd_port: number;
+    public port: number;
+
+    // todo: enabled status
+    // todo: worker status
+    // todo: api status
+
     constructor(){
+        this.initEnvInfo();
         this.initProcessInfo();
+        this.initRuntimeInfo();
     }
 
-    initProcessInfo() {
-        this.in_dev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
-        this.ip = ip.address();
-        this.pid = process.pid;
+    initEnvInfo() {
         this.cwd = process.cwd();
         this.node_env = process.env.NODE_ENV;
         this.pkg_version = process.env.npm_package_version;
+        this.in_dev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
+    }
+
+    initProcessInfo() {
+        this.ip = ip.address();
+        this.pid = process.pid;
+    }
+
+    initRuntimeInfo() {
+        this.init_time = new Date();
     }
 
     async listenCommands() {
@@ -38,7 +63,6 @@ export class Runtime {
         const url = `${ip.address()}:${port}`;
         const target = server.getTarget(CommandsAPI);
         turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
-
         this.cmd_port = port;
     }
 
@@ -49,6 +73,9 @@ export class Runtime {
     }
 
     save(){
+        this.name = turtle.conf.name;
+        this.id = turtle.conf.id;
+        this.server_id = turtle.serviceId;
         const p = path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
         fs.writeFileSync(p, JSON.stringify({ ... this, service_id: turtle.serviceId}, null, 2));
         turtleVerbose("RUNTIME SAVED");
