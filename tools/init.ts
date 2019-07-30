@@ -140,7 +140,7 @@ export const init = {
             alias: "r",
         }
     },
-    exec: async (data: { repo: string }) => {
+    exec: async (cmd: { repo: string }) => {
         const pkgPath = path.resolve(process.cwd(), `package.json`);
         if (fs.existsSync(pkgPath)) {
             console.log(`[ERROR] package file ${pkgPath} is already exist.`);
