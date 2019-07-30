@@ -1,6 +1,7 @@
 import {ConsoleHelper} from "kht";
 import * as fs from "fs-extra";
 import * as path from "path";
+import {ICmd} from "./_base";
 
 function packageJson(
     name: string,
@@ -133,24 +134,37 @@ function defaultConf(name: string, port: string, drivers: string[]) {
     return conf;
 }
 
-export const init = {
+export const init: ICmd = {
     desc: "init a turtle project",
     args: {
+        name: {
+            alias: "n",
+            input: true
+        },
+        version: {
+            alias: "v",
+            input: true
+        },
+        desc: {
+            alias: "d",
+            input: true
+        },
         repo: {
             alias: "r",
+            input: true
         }
     },
-    exec: async (cmd: { repo: string }) => {
+    exec: async (cmd: { [key: string]: string }) => {
         const pkgPath = path.resolve(process.cwd(), `package.json`);
         if (fs.existsSync(pkgPath)) {
             console.log(`[ERROR] package file ${pkgPath} is already exist.`);
             return;
         }
 
-        const name: string = await ConsoleHelper.question("name (turtle-project): ") as string || "turtle-project";
-        const version: string = await ConsoleHelper.question("version (0.0.1): ") as string || "0.0.1";
-        const desc: string = await ConsoleHelper.question("description: ") as string;
-        const repo: string = await ConsoleHelper.question("repository: ") as string;
+        const name: string = cmd.name || await ConsoleHelper.question("name (turtle-project): ") as string || "turtle-project";
+        const version: string = cmd.version || await ConsoleHelper.question("version (0.0.1): ") as string || "0.0.1";
+        const desc: string = cmd.desc || await ConsoleHelper.question("description: ") as string;
+        const repo: string = cmd.repo || await ConsoleHelper.question("repository: ") as string;
         const keywordsStr: string = await ConsoleHelper.question("keywords: ") as string;
         const author: string = await ConsoleHelper.question("author: ") as string;
         const license: string = await ConsoleHelper.question("license (MIT): ") as string || "MIT";
