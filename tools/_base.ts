@@ -26,12 +26,14 @@ export function createCommand(blob: { [key: string]: ICmd }) {
     }
 }
 
-
-function alive(pid: number) {
+export function alive(pid: number): boolean {
     try {
-        return process.kill(pid, 0);
+        process.kill(pid, 0);
+        // console.log(pid);
+        return true;
     }
     catch (e) {
-        return e.code === "EPERM";
+        // console.log(pid, e.code);
+        return false;
     }
 }

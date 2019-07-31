@@ -41,7 +41,7 @@ export abstract class Worker implements IWorker {
         try {
             this.enabled = false;
             this.log.info("- close worker ✓");
-            if(await this.onClose()) {
+            if (await this.onClose()) {
                 this.log.info("※※ application exited ※※");
                 this.log.close();
                 this.runningState = WorkerRunningState.RUNNING;
