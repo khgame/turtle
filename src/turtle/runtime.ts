@@ -6,6 +6,7 @@ import * as path from "path";
 import {turtle} from "./index";
 import * as fs from "fs-extra";
 import {turtleVerbose} from "../core/utils/turtleVerbose";
+import {http} from "../utils";
 
 export class Runtime {
 
@@ -19,12 +20,13 @@ export class Runtime {
 
     // process info
     public ip: string;
+    public ip_public: string;
     public pid: number;
 
     // static info
     public name: string;
     public id: string | number | Buffer;
-    public server_id: string;
+    public service_id: string;
 
     // runtime info
     public init_time: Date;
@@ -36,25 +38,26 @@ export class Runtime {
     // todo: worker status
     // todo: api status
 
-    constructor(){
+    constructor() {
         this.initEnvInfo();
         this.initProcessInfo();
         this.initRuntimeInfo();
     }
 
-    initEnvInfo() {
+    protected initEnvInfo() {
         this.cwd = process.cwd();
         this.node_env = process.env.NODE_ENV;
         this.pkg_version = process.env.npm_package_version;
         this.in_dev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
     }
 
-    initProcessInfo() {
+    protected initProcessInfo() {
         this.ip = ip.address();
+
         this.pid = process.pid;
     }
 
-    initRuntimeInfo() {
+    protected initRuntimeInfo() {
         this.init_time = new Date();
         this.start_cmd = process.argv;
     }
@@ -68,20 +71,27 @@ export class Runtime {
         const target = server.getTarget(CommandsAPI);
         turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
         this.cmd_port = port;
+        const result: any = await http().get("https://api.ipify.org/").catch(() => {
+        });
+        if (result.status === 200) {
+            this.ip_public = result.data;
+        }
+
     }
 
-    setPort(port: number){
+    setPort(port: number) {
         this.port = port;
         this.initProcessInfo();
         this.save();
     }
 
-    save(){
+    save() {
         this.name = turtle.conf.name;
         this.id = turtle.conf.id;
-        this.server_id = turtle.serviceId;
+        this.service_id = turtle.serviceId;
         const p = path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
-        fs.writeFileSync(p, JSON.stringify({ ... this, service_id: turtle.serviceId}, null, 2));
+        // fs.writeFileSync(p, JSON.stringify({ ... this }, null, 2));
+        fs.writeFileSync(p, JSON.stringify({... this, service_id: turtle.serviceId}, null, 2));
         turtleVerbose("RUNTIME SAVED");
     }
 }
