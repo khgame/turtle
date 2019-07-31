@@ -76,7 +76,7 @@ export class Runtime {
         if (result.status === 200) {
             this.ip_public = result.data;
         }
-
+        this.save();
     }
 
     setPort(port: number) {
