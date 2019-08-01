@@ -1,6 +1,7 @@
 import {ConsoleHelper} from "kht";
 import * as fs from "fs";
 import {alive, ICmd} from "./_base";
+import chalk from "chalk";
 
 export const ls: ICmd = {
     desc: "ls <path>",
@@ -35,7 +36,10 @@ export const ls: ICmd = {
             const {name, runtime, active} = t;
             const print: any[] = [name];
             if (cmd.process) {
-                print.push(active ? `◆ON:${runtime.pid}◆` : `◇OFF:${runtime.pid}◇` );
+                print.push(active
+                    ? chalk.greenBright(`◆ON:${runtime.pid}◆`)
+                    : chalk.redBright(`◇OFF:${runtime.pid}◇`)
+                );
             }
             if (cmd.info) {
                 print.push(runtime);

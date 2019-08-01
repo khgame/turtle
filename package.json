@@ -82,6 +82,7 @@
     "@types/socket.io": "^2.1.2",
     "@types/socket.io-client": "^1.4.32",
     "chai": "^4.2.0",
+    "chalk": "^2.4.2",
     "cross-env": "^5.2.0",
     "mocha": "^6.1.2",
     "mongodb": "^3.2.3",

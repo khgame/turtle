@@ -3,6 +3,7 @@ import {ConsoleHelper} from "kht";
 import * as fs from "fs";
 import {alive, ICmd} from "./_base";
 import {forCondition, timeoutPromise} from "kht/lib";
+import chalk from "chalk";
 
 
 export const stop: ICmd = {
@@ -10,7 +11,7 @@ export const stop: ICmd = {
     args: {},
     exec: async (name: string, cmd: { info: string }) => {
         if (!cmd) {
-            console.error(`failed: name of turtle process must be given.`);
+            console.error(chalk.red(`error: name of turtle process must be given.`));
             return;
         }
         const paths = fs.readdirSync(".");
@@ -26,27 +27,27 @@ export const stop: ICmd = {
         }
 
         if (!path) {
-            console.error(`failed: cannot find the turtle process ${path} in this folder.`);
+            console.error(chalk.yellow(`failed: cannot find the turtle process ${path} in this folder.`));
             return;
         }
 
         const runtime = JSON.parse(fs.readFileSync("./" + path, {encoding: "UTF-8"}));
         if (!runtime || !runtime.pid) {
-            console.error(`failed: cannot find the turtle process ${path} in this folder.`);
+            console.error(chalk.yellow(`failed: cannot find the turtle process ${path} in this folder.`));
             return;
         }
 
         if (!alive(runtime.pid)) {
-            console.error(`failed: process ${runtime.pid} of ${path} in not running.`);
+            console.error(chalk.yellow(`failed: process ${runtime.pid} of ${path} is not running.`));
             return;
         }
-        console.log(`the turtle process ${name} (pid: ${runtime.pid}) is running, try execute kill ${runtime.pid} -2`);
+        console.log(`the turtle process ${chalk.greenBright(name)} (pid: ${chalk.greenBright(runtime.pid)}) is running, try execute kill ${runtime.pid} -2`);
         process.kill(runtime.pid, 2);
         try {
             await timeoutPromise(60000, forCondition(() => !alive(runtime.pid)));
-            console.log(`the turtle process ${name} (pid: ${runtime.pid}) has been killed`);
+            console.log(`the turtle process ${chalk.greenBright(name)} (pid: ${chalk.greenBright(runtime.pid)}) has been killed`);
         } catch (ex) {
-            console.error(`try kill the turtle process ${name} failed, process exit.`);
+            console.error(chalk.red(`error: try kill the turtle process ${name} failed, process exit.`));
             return;
         }
     }

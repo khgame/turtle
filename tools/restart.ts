@@ -1,5 +1,7 @@
 import {ConsoleHelper} from "kht";
 
+import chalk from "chalk";
+
 const {spawn} = require("child_process");
 import * as fs from "fs";
 import {alive, ICmd} from "./_base";
@@ -46,7 +48,7 @@ export const restart: ICmd = {
             console.error(`failed: cannot find the turtle process ${path} in this folder.`);
             return;
         }
-        console.log(`runtime file of ${path} are loaded`);
+        console.log(`turtle runtime file of ${chalk.greenBright(path)} are loaded`);
 
         if (alive(runtime.pid)) {
             console.log(`the turtle process ${name} (pid: ${runtime.pid}) is running, try execute kill ${runtime.pid} -2`);
@@ -101,7 +103,7 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
             stdio: [ "ignore", out, err ]
         });
         child.unref();
-        console.log(`redirect stdout/stderr to file ${exportPath}`);
+        console.log(`redirect stdout/stderr to file ${chalk.blueBright(exportPath)}`);
 
     }
 };
