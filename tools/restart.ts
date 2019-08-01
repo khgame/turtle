@@ -5,16 +5,21 @@ import * as fs from "fs";
 import {alive, ICmd} from "./_base";
 import {forCondition, timeoutPromise} from "kht/lib";
 
-
 export const restart: ICmd = {
     desc: "restart <name>",
     args: {
-        watch: {
-            alias: "w",
-            input: false
+        out: {
+            alias: "o",
+            desc: "specify the file to receive standard input/output logs.",
+            input: true
+        },
+        timestamp: {
+            alias: "t",
+            desc: "specify the timestamp format of log file's name. [d/h/m/s]",
+            input: true
         }
     },
-    exec: async (name: string, cmd: { info: string }) => {
+    exec: async (name: string, cmd: { info?: string, out?: string, timestamp?: string }) => {
         if (!cmd) {
             console.error(`failed: name of turtle process must be given.`);
             return;
@@ -32,7 +37,7 @@ export const restart: ICmd = {
         }
 
         if (!path) {
-            console.error(`failed: cannot find the turtle process ${path} in this folder.`);
+            console.error(`failed: cannot find the turtle process ${name} in this folder.`);
             return;
         }
 
@@ -41,6 +46,7 @@ export const restart: ICmd = {
             console.error(`failed: cannot find the turtle process ${path} in this folder.`);
             return;
         }
+        console.log(`runtime file of ${path} are loaded`);
 
         if (alive(runtime.pid)) {
             console.log(`the turtle process ${name} (pid: ${runtime.pid}) is running, try execute kill ${runtime.pid} -2`);
@@ -56,7 +62,7 @@ export const restart: ICmd = {
 
         if (runtime.turtle_cli_version && runtime.turtle_cli_version < 1) {
             console.error(
-`turtle cli version [${runtime.turtle_cli_version || 0}] is too low, expect >= 1 (leb version >= 0.0.57).
+                `turtle cli version [${runtime.turtle_cli_version || 0}] is too low, expect >= 1 (leb version >= 0.0.57).
 please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to install.
 `);
             return;
@@ -67,14 +73,35 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
             return;
         }
 
+        const now = new Date();
+
+        let timeLength = 24;
+        switch (cmd.timestamp) {
+            case "d": timeLength = 10; break;
+            case "h": timeLength = 13; break;
+            case "m": timeLength = 16; break;
+            case "s": timeLength = 19; break;
+            default: break;
+        }
+
+
+        const exportPath = cmd.out ||
+            "./" + path + "." + (now.toISOString()).substr(0, timeLength)
+                .replace(/:/g, "-")
+                .replace(/\./g, "_") + ".log";
+
+        const out = fs.openSync(exportPath, "a");
+        const err = fs.openSync(exportPath, "a");
+
         const processName = runtime.start_cmd[0];
         const args = runtime.start_cmd.slice(1);
-        console.log("run:", processName, ... args);
+        console.log("run:", processName, ...args);
         const child = spawn(processName, args, {
             detached: true,
-            stdio: "ignore"
+            stdio: [ "ignore", out, err ]
         });
         child.unref();
+        console.log(`redirect stdout/stderr to file ${exportPath}`);
 
     }
 };
