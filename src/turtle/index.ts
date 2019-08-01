@@ -146,10 +146,23 @@ export class Turtle<IDrivers> {
             return;
         }
 
+        const oldProcessAlive = this.runtime.checkProcessAlive();
+
+        if (oldProcessAlive) {
+            turtleVerbose(`PROCESS COLLISION DETECTED`, `pid: ${oldProcessAlive}`);
+            throw new Error(`process of name:${
+                this.runtime.name} id:${
+                this.runtime.id} is running (pid:${
+                oldProcessAlive}) in current dir (path:${
+                this.runtime.runtimeFilePath}) .`);
+        }
+
+        await this.runtime.listenCommands();
+
         process.on("SIGTERM", () => this.shutdown("SIGTERM"));
         process.on("SIGINT", () => this.shutdown("SIGINT"));
         process.on("SIGHUP", () => this.reload("SIGHUP"));
-        await this.runtime.listenCommands();
+
         this.initialed = true;
 
         turtleVerbose(`PROCESS INITIALED (pid: ${turtle.runtime.pid})`,
@@ -179,15 +192,6 @@ export class Turtle<IDrivers> {
         if (this.api && api !== this.api) {
             this.log.warn(`there are another registered api, nothing will happen.`);
             return this;
-        }
-
-        const oldProcessAlive = this.runtime.checkProcessAlive();
-        if (oldProcessAlive) {
-            throw new Error(`process of name:${
-                this.runtime.name} id:${
-                this.runtime.id} is running (pid:${
-                oldProcessAlive}) in current dir (path:${
-                this.runtime.runtimeFilePath}) .`);
         }
 
         switch (api.runningState) {
