@@ -91,7 +91,27 @@ export class Runtime {
         this.service_id = turtle.serviceId;
         const p = path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
         // fs.writeFileSync(p, JSON.stringify({ ... this }, null, 2));
-        fs.writeFileSync(p, JSON.stringify({... this, service_id: turtle.serviceId}, null, 2));
+        fs.writeFileSync(
+            this.runtimeFilePath,
+            JSON.stringify(this, null, 2));
         turtleVerbose("RUNTIME SAVED");
+    }
+
+    get runtimeFilePath(): string {
+        return path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
+    }
+
+    checkProcessAlive() : number | false {
+        const oldRuntime = fs.readJsonSync(this.runtimeFilePath);
+        if (!oldRuntime || !oldRuntime.pid) {
+            return false;
+        }
+        try {
+            process.kill(oldRuntime.pid, 0);
+            return oldRuntime.pid;
+        }
+        catch (e) {
+            return false;
+        }
     }
 }

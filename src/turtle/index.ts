@@ -4,7 +4,7 @@ import * as Path from "path";
 import {IConf, ISetting} from "../conf/interface";
 import {EventEmitter} from "events";
 import {IApi, APIRunningState} from "../core/api";
-import {exitLog, genLogger, Logger} from "../utils";
+import {CError, exitLog, genLogger, Logger} from "../utils";
 import {timeoutPromise} from "kht/lib";
 import * as getPort from "get-port";
 import {Runtime} from "./runtime";
@@ -179,6 +179,15 @@ export class Turtle<IDrivers> {
         if (this.api && api !== this.api) {
             this.log.warn(`there are another registered api, nothing will happen.`);
             return this;
+        }
+
+        const oldProcessAlive = this.runtime.checkProcessAlive();
+        if (oldProcessAlive) {
+            throw new Error(`process of name:${
+                this.runtime.name} id:${
+                this.runtime.id} is running (pid:${
+                oldProcessAlive}) in current dir (path:${
+                this.runtime.runtimeFilePath}) .`);
         }
 
         switch (api.runningState) {
