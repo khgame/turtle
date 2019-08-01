@@ -101,7 +101,10 @@ export class Runtime {
         return path.resolve(process.cwd(), `.${turtle.conf.name}-${turtle.conf.id}.turtle`);
     }
 
-    checkProcessAlive() : number | false {
+    checkProcessAlive(): number | false {
+        if (!fs.existsSync(this.runtimeFilePath)) {
+            return false;
+        }
         const oldRuntime = fs.readJsonSync(this.runtimeFilePath);
         if (!oldRuntime || !oldRuntime.pid) {
             return false;

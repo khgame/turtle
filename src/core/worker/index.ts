@@ -8,9 +8,15 @@ export abstract class Worker implements IWorker {
     enabled: boolean;
     runningState: WorkerRunningState = WorkerRunningState.NONE;
 
+    public static workerMap: { [key: string]: IWorker } = {};
+
     public log: Logger;
 
     public constructor(public readonly name: string) {
+        if (Worker.workerMap[name]) {
+            throw new Error(`worker ${name} are already exist.`);
+        }
+        Worker.workerMap[name] = this;
         this.log = genLogger("worker:" + name);
     }
 
@@ -46,7 +52,7 @@ export abstract class Worker implements IWorker {
                 this.log.close();
                 this.runningState = WorkerRunningState.RUNNING;
                 return true;
-            }else{
+            } else {
                 this.runningState = WorkerRunningState.CLOSED;
                 return false;
             }
@@ -58,5 +64,6 @@ export abstract class Worker implements IWorker {
     }
 
     public abstract onClose(): Promise<boolean> ;
+
     public abstract onStart(): Promise<boolean> ;
 }
