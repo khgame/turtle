@@ -95,7 +95,7 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
         const out = fs.openSync(exportPath, "a");
         const err = fs.openSync(exportPath, "a");
 
-        const processName = runtime.start_cmd[0];
+        const processName = runtime.start_cmd[0]; // todo: sometimes these will not work
         const args = runtime.start_cmd.slice(1);
         console.log("run:", processName, ...args);
         const child = spawn(processName, args, {

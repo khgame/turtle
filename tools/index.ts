@@ -4,10 +4,11 @@ import {init} from "./init";
 import {ls} from "./ls";
 import {restart} from "./restart";
 import {stop} from "./stop";
+import {log} from "./log";
 import {createCommand} from "./_base";
 
 commander.version(process.version);
 
-createCommand({init, ls, restart, stop});
+createCommand({init, ls, restart, stop, log});
 
 commander.parse(process.argv);
