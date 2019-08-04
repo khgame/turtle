@@ -7,6 +7,8 @@ import {turtle} from "./index";
 import * as fs from "fs-extra";
 import {turtleVerbose} from "../core/utils/turtleVerbose";
 import {http} from "../utils";
+import * as publicIp from "public-ip";
+import {timeoutPromise} from "kht/lib";
 
 export class Runtime {
 
@@ -71,11 +73,7 @@ export class Runtime {
         const target = server.getTarget(CommandsAPI);
         turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
         this.cmd_port = port;
-        const result: any = await http().get("https://api.ipify.org/").catch(() => {
-        });
-        if (result.status === 200) {
-            this.ip_public = result.data;
-        }
+        this.ip_public = await publicIp.v4();
         this.save();
     }
 
