@@ -1,5 +1,6 @@
 import {APIRunningState, CError, genAssert, IApi, turtle} from "../../src/";
 import * as Path from "path";
+import chalk from "chalk";
 
 /** ApiClass is an implementation of IApi */
 class ApiClass implements IApi {
@@ -35,7 +36,12 @@ async function start() {
     // await turtle.initialDrivers([]); // initial drivers if needed
     /** 3. put the api instance to turtle.startAll */
     await turtle.startAll(api);
-    setInterval(() => console.log("update " + Date.now()), 5000);
+    setInterval(() =>
+            console.log(
+                chalk.rgb(255 * Math.random(), 255 * Math.random(), 255 * Math.random())("update " + Date.now())
+            )
+        , 1000
+    );
 }
 
 start().then(() => {

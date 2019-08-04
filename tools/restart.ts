@@ -6,6 +6,7 @@ const {spawn} = require("child_process");
 import * as fs from "fs";
 import {alive, ICmd} from "./_base";
 import {forCondition, timeoutPromise} from "kht/lib";
+import {followFileToStdout} from "./utils";
 
 export const restart: ICmd = {
     desc: "restart <name>",
@@ -19,9 +20,14 @@ export const restart: ICmd = {
             alias: "t",
             desc: "specify the timestamp format of log file's name. [d/h/m/s]",
             input: true
+        },
+        follow: {
+            alias: "f",
+            desc: "the -f option causes logs are printed after restart.",
+            input: false
         }
     },
-    exec: async (name: string, cmd: { info?: string, out?: string, timestamp?: string }) => {
+    exec: async (name: string, cmd: { info?: string, out?: string, timestamp?: string, follow?: boolean }) => {
         if (!cmd) {
             console.error(`failed: name of turtle process must be given.`);
             return;
@@ -104,6 +110,10 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
         });
         child.unref();
         console.log(`redirect stdout/stderr to file ${chalk.blueBright(exportPath)}`);
+
+        if (cmd.follow){
+            await followFileToStdout(exportPath);
+        }
 
     }
 };
