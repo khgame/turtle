@@ -9,6 +9,7 @@ import {turtleVerbose} from "../core/utils/turtleVerbose";
 import {http} from "../utils";
 import * as publicIp from "public-ip";
 import {timeoutPromise} from "kht/lib";
+import chalk from "chalk";
 
 export class Runtime {
 
@@ -73,7 +74,11 @@ export class Runtime {
         const target = server.getTarget(CommandsAPI);
         turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
         this.cmd_port = port;
-        this.ip_public = await publicIp.v4();
+        try {
+            this.ip_public = await publicIp.v4();
+        }catch (e) {
+            console.log(chalk.red(`get public ip error: ${e}`));
+        }
         this.save();
     }
 
