@@ -53,13 +53,13 @@ export class Turtle<IDrivers> {
       ██    ██  ██  ██  ██    ██    ██      ██    
       ██    ██  ██  ████      ██    ██      ██████
       ██    ██  ██  ██  ██    ██    ██      ██
-      ██    ██████  ██  ██    ██    ██████  ██████ @khgame
+      ██    ██████  ██  ██    ██    ██████  ██████ ` + chalk.grey(`@khgame
       
    ┌──────────────────────────────────────────────────────┐
    │ - github - https://github.com/khgame/turtle          │ 
    │ - npm - https://www.npmjs.com/package/@khgame/turtle │ 
    └──────────────────────────────────────────────────────┘
-`);
+`));
     }
 
     public get drivers(): IDrivers {
@@ -411,5 +411,6 @@ export class Turtle<IDrivers> {
 }
 
 import {turtleVerbose} from "../core/utils/turtleVerbose";
+import chalk from "chalk";
 
 export const turtle = new Turtle<any>();
