@@ -2,6 +2,59 @@ import {forCondition, forMs} from "kht/lib";
 import * as fs from "fs";
 import {promisify} from "util";
 
+export function getTurtleInfo(name: string): string {
+    const paths = fs.readdirSync(".");
+    const info: { [key: string]: any } = {};
+    const turtles = paths
+        .filter(p => p.startsWith(".") && p.endsWith(".turtle"));
+
+    turtles.forEach(fName => {
+        info[fName] = JSON.parse(fs.readFileSync(fName, {encoding: "UTF-8"}));
+    });
+
+    let path = "";
+    if (info[name]) {
+        path = name;
+    }
+    else if (info["." + name + ".turtle"]) {
+        path = "." + name + ".turtle";
+    }
+    else {
+        for (const key in info) {
+            console.log("info[key].pid", info[key].pid, name);
+            if (info[key].pid.toString() !== name) {
+                continue;
+            }
+            path = key;
+        }
+    }
+
+    return path;
+}
+
+export function getTimeString(format: string): string {
+    const now = new Date();
+
+    let timeLength = 24;
+    switch (format) {
+        case "d":
+            timeLength = 10;
+            break;
+        case "h":
+            timeLength = 13;
+            break;
+        case "m":
+            timeLength = 16;
+            break;
+        case "s":
+            timeLength = 19;
+            break;
+        default:
+            break;
+    }
+
+    return (now.toISOString()).substr(0, timeLength).replace(/:/g, "-").replace(/\./g, "_");
+}
 
 export async function followFileToStdout(path: string){
     let currentSize = 0;

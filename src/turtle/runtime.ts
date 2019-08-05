@@ -13,7 +13,7 @@ import chalk from "chalk";
 
 export class Runtime {
 
-    public turtle_cli_version = 1; // for tools usage
+    public turtle_cli_version = 2; // for tools usage
 
     // env
     public cwd: string;
@@ -36,6 +36,8 @@ export class Runtime {
     public cmd_port: number;
     public port: number;
     public start_cmd: string[];
+
+    public npm_lifecycle_script: string;
 
     // todo: enabled status
     // todo: worker status
@@ -63,6 +65,7 @@ export class Runtime {
     protected initRuntimeInfo() {
         this.init_time = new Date();
         this.start_cmd = process.argv;
+        this.npm_lifecycle_script = process.env.npm_lifecycle_script;
     }
 
     async listenCommands() {
