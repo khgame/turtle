@@ -25,6 +25,11 @@
   dependencies:
     regenerator-runtime "^0.13.2"
 
+"@khgame/err@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.npm.taobao.org/@khgame/err/download/@khgame/err-0.1.0.tgz?cache=0&sync_timestamp=1565022645479&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40khgame%2Ferr%2Fdownload%2F%40khgame%2Ferr-0.1.0.tgz#42ace3d9cc6b29b8a49fbab67136a60c797665b5"
+  integrity sha1-Qqzj2cxrKbikn7q2cTamDHl2ZbU=
+
 "@khgame/jsonrpc@^0.1.7":
   version "0.1.7"
   resolved "https://registry.npm.taobao.org/@khgame/jsonrpc/download/@khgame/jsonrpc-0.1.7.tgz#1c335bcb177b3bd940018944eb3ba9b2b2d5d7c1"

@@ -1,58 +1,32 @@
 import {Logger} from "winston";
 import {genLogger} from "./logger";
+import {CAssert, CError, StringMethod} from "@khgame/err";
 
-type StringMethod = () => string;
+export * from "@khgame/err";
 
-export class CError extends Error {
-
-    constructor(public readonly code: number | string, msg: string | Error | StringMethod) {
-        super(
-            (typeof msg === "string")
-                ? msg
-                : ((msg instanceof Error)
-                ? msg.message : msg())
-        );
-        Object.setPrototypeOf(this, CError.prototype);
-        this.name = "CError";
-    }
-}
-
-export class Assert {
+export class Assert extends CAssert {
 
     protected _log: Logger;
 
-    public get log(): Logger {
+    public get logger(): Logger {
         return this._log || (this._log = genLogger(this.prefix));
     }
 
     constructor(public prefix?: string) {
+        super({
+            fnLog: str => {
+                if (this.logger) {
+                    this.logger.warn(str);
+                }
+            }
+        });
     }
 
-    cok<T>(condition: T, code: number, msg: string | Error | StringMethod) {
-        if (condition instanceof Promise) {
-            throw new Error("assert condition cannot be a promise");
-        }
-
-        if (condition) {
-            return;
-        }
-
-        let msgStr: string = "";
-        let err = msg;
-        if (typeof msg === "string") {
-            msgStr = msg;
-            err = new CError(code, msgStr);
-        } else if (msg instanceof Error) {
-            err = new CError(code, msg as Error);
-            msgStr = code + ": " + err.message + " stack: " + err.stack;
-        } else {
-            msgStr = (msg as StringMethod)();
-            err = new CError(code, msgStr);
-        }
-        this.log.warn(msgStr);
-        throw err;
-    }
-
+    /**
+     * @deprecated
+     * @param {T} condition
+     * @param {string | Error | StringMethod} msg
+     */
     ok<T>(condition: T, msg: string | Error | StringMethod) {
         if (condition instanceof Promise) {
             throw new Error("assert condition cannot be a promise");
@@ -76,14 +50,28 @@ export class Assert {
             msgStr = (msg as StringMethod)();
             msg = new Error(msgStr);
         }
-        this.log.warn(msgStr);
+        this.logger.warn(msgStr);
         throw msg;
     }
 
+    /**
+     * @deprecated
+     * @param {T} a
+     * @param {T} b
+     * @param {string | Error | StringMethod} msg
+     * @return {undefined}
+     */
     sEqual<T>(a: T, b: T, msg: string | Error | StringMethod) {
         return this.ok(a === b, msg);
     }
 
+    /**
+     * @deprecated
+     * @param {T} a
+     * @param {T} b
+     * @param {string | Error | StringMethod} msg
+     * @return {undefined}
+     */
     sNotEqual<T>(a: T, b: T, msg: string | Error | StringMethod) {
         return this.ok(a !== b, msg);
     }
