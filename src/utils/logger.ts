@@ -3,6 +3,7 @@ import * as path from "path";
 import {createLogger, format, Logger, transports} from "winston";
 import * as DailyRotateFile from "winston-daily-rotate-file";
 import {turtle} from "../turtle";
+import chalk from "chalk";
 
 export {Logger} from "winston";
 
@@ -37,7 +38,7 @@ export interface IFileTransportOption {
 
 function createFileTransport(label: string, options?: IFileTransportOption) {
     if (!turtle.conf) {
-        console.error(`create transport error, turtle's config haven't been set`);
+        console.error(chalk.red("create transport error, turtle's config haven't been set"));
         return;
     }
 
@@ -83,10 +84,16 @@ const loggers: any = {};
  * @param options
  * @return {Logger} = the logger
  */
-export function genLogger(label: string = "", options?: IFileTransportOption ): Logger { // development debug
+export function genLogger(label: string = "", options?: IFileTransportOption ): Logger | null { // development debug
+    if (!turtle.conf) {
+        console.error(chalk.red("create logger error, turtle's config haven't been set"));
+        return null;
+    }
+
     if (loggers[label]) {
         return loggers[label];
     }
+
     const inDev = turtle.runtime.in_dev;
     const t = [
         new transports.Console({
