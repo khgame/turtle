@@ -2,7 +2,8 @@ import {ConsoleHelper} from "kht";
 
 import chalk from "chalk";
 
-const {spawn} = require("child_process");
+import {spawn} from "child_process";
+
 import * as fs from "fs";
 import {alive, ICmd} from "./_base";
 import {forCondition, timeoutPromise} from "kht/lib";
@@ -33,15 +34,29 @@ export const restart: ICmd = {
             return;
         }
         const paths = fs.readdirSync(".");
+        const info: { [key: string]: any } = {};
         const turtles = paths
             .filter(p => p.startsWith(".") && p.endsWith(".turtle"));
 
+        turtles.forEach(fName => {
+            info[fName] = JSON.parse(fs.readFileSync(fName, {encoding: "UTF-8"}));
+        });
+
         let path = "";
-        if (turtles.indexOf(name) >= 0) {
+        if (info[name]) {
             path = name;
         }
-        if (turtles.indexOf("." + name + ".turtle") >= 0) {
+        else if (info["." + name + ".turtle"]) {
             path = "." + name + ".turtle";
+        }
+        else {
+            for (const key in info) {
+                console.log("info[key].pid", info[key].pid, name);
+                if (info[key].pid.toString() !== name) {
+                    continue;
+                }
+                path = key;
+            }
         }
 
         if (!path) {
@@ -85,13 +100,21 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
 
         let timeLength = 24;
         switch (cmd.timestamp) {
-            case "d": timeLength = 10; break;
-            case "h": timeLength = 13; break;
-            case "m": timeLength = 16; break;
-            case "s": timeLength = 19; break;
-            default: break;
+            case "d":
+                timeLength = 10;
+                break;
+            case "h":
+                timeLength = 13;
+                break;
+            case "m":
+                timeLength = 16;
+                break;
+            case "s":
+                timeLength = 19;
+                break;
+            default:
+                break;
         }
-
 
         const exportPath = cmd.out ||
             "./" + path + "." + (now.toISOString()).substr(0, timeLength)
@@ -106,12 +129,17 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
         console.log("run:", processName, ...args);
         const child = spawn(processName, args, {
             detached: true,
-            stdio: [ "ignore", out, err ]
+            stdio: ["ignore", out, err]
         });
         child.unref();
-        console.log(`redirect stdout/stderr to file ${chalk.blueBright(exportPath)}`);
 
-        if (cmd.follow){
+        console.log(`-
+${chalk.blueBright("PROCESS: " + child.pid)} has been created!
+Redirect stdout/stderr to file ${chalk.blueBright(exportPath)}
+${chalk.grey("To follow the logfile, you can restart process with -f flag, or using turtle log -f command.")}
+        `);
+
+        if (cmd.follow) {
             await followFileToStdout(exportPath);
         }
 
