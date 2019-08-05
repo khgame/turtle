@@ -4,6 +4,7 @@ import * as fs from "fs";
 import {alive, ICmd} from "./_base";
 import {forCondition, timeoutPromise} from "kht/lib";
 import chalk from "chalk";
+import {getTurtleInfo} from "./utils";
 
 
 export const stop: ICmd = {
@@ -14,17 +15,8 @@ export const stop: ICmd = {
             console.error(chalk.red(`error: name of turtle process must be given.`));
             return;
         }
-        const paths = fs.readdirSync(".");
-        const turtles = paths
-            .filter(p => p.startsWith(".") && p.endsWith(".turtle"));
 
-        let path = "";
-        if (turtles.indexOf(name) >= 0) {
-            path = name;
-        }
-        if (turtles.indexOf("." + name + ".turtle") >= 0) {
-            path = "." + name + ".turtle";
-        }
+        const path = getTurtleInfo(name);
 
         if (!path) {
             console.error(chalk.yellow(`failed: cannot find the turtle process ${path} in this folder.`));
