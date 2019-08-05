@@ -5,7 +5,7 @@ import chalk from "chalk";
 import {followFileToStdout} from "./utils";
 
 export const log: ICmd = {
-    desc: "log <name>",
+    desc: "log",
     args: {
         follow: {
             alias: "f",
