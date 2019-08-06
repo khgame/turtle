@@ -151,8 +151,8 @@ export class Turtle<IDrivers> {
         if (oldProcessAlive) {
             turtleVerbose(`PROCESS COLLISION DETECTED`, `pid: ${oldProcessAlive}`);
             throw new Error(`process of name:${
-                this.runtime.name} id:${
-                this.runtime.id} is running (pid:${
+                this.conf.name} id:${
+                this.conf.id} is running (pid:${
                 oldProcessAlive}) in current dir (path:${
                 this.runtime.runtimeFilePath}) .`);
         }
