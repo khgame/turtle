@@ -6,10 +6,9 @@ import * as path from "path";
 import {turtle} from "./index";
 import * as fs from "fs-extra";
 import {turtleVerbose} from "../core/utils/turtleVerbose";
-import {http} from "../utils";
 import * as publicIp from "public-ip";
-import {timeoutPromise} from "kht/lib";
 import chalk from "chalk";
+import {promisify} from "util";
 
 export class Runtime {
 
@@ -80,8 +79,15 @@ export class Runtime {
         try {
             this.ip_public = await publicIp.v4();
         }catch (e) {
-            console.log(chalk.red(`get public ip error: ${e}`));
+            const getip = require("externalip");
+            try {
+                this.ip_public = await promisify(getip)();
+            }catch (e) {
+                console.log(chalk.red(`get public ip error: ${e}`));
+            }
+            // console.log(chalk.red(`get public ip error: ${e}`));
         }
+
         this.save();
     }
 
