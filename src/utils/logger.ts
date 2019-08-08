@@ -84,7 +84,7 @@ const loggers: any = {};
  * @param options
  * @return {Logger} = the logger
  */
-export function genLogger(label: string = "", options?: IFileTransportOption ): Logger | null { // development debug
+export function genLogger(label: string = "", options?: IFileTransportOption ): Logger { // development debug
     if (!turtle.conf) {
         console.error(chalk.red("create logger error, turtle's config haven't been set"));
         return null;
