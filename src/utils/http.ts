@@ -13,8 +13,8 @@ export function createHttpClient(baseURL: string = "", timeout: number = 17000) 
             timeout,
             responseType: "json",
             headers: {
-                "svr_name": turtle.conf.name,
-                "svr_id": turtle.conf.id,
+                "svr_name": turtle.conf ? turtle.conf.name : undefined,
+                "svr_id": turtle.conf ? turtle.conf.id : undefined,
                 "Content-Type": "application/json",
             },
         });
