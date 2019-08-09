@@ -82,7 +82,7 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
 `));
         }
 
-        const exportPath = cmd.out || "./" + getTimeString(cmd.timestamp) + ".log";
+        const exportPath = cmd.out || `./${path}.${getTimeString(cmd.timestamp)}.log`;
 
         let processName: string = ""; // todo: sometimes these will not work
         let args: string[] = [];
