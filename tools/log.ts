@@ -25,19 +25,29 @@ export const log: ICmd = {
             console.log(chalk.yellow(`no turtle logs are found.`));
         }
 
+        console.log(
+            `turtle log files in current dir ${chalk.greenBright(process.cwd())}`
+            + turtleLogs.reduce((p, s, i) => p + `\n[${i}] ` + s, ""));
+
         let selectedLogName = "";
         if (turtleLogs.length > 1) {
-            const index = await ConsoleHelper.question(
-                `turtle log files in current dir ${chalk.greenBright(process.cwd())}`
-                + turtleLogs.reduce((p, s, i) => p + `\n[${i}] ` + s, "") + "\ninput your selection: ") as string || "turtle-project";
+            let index = await ConsoleHelper.question("input your selection: ") as string || "";
+
             if (index.trim() === "") {
                 console.error(chalk.red(`error: log file's index must be given.`));
                 return;
             }
-            const ind = parseInt(index);
-            if (ind < 0 || ind >= turtleLogs.length) {
-                console.error(chalk.red(`error: ind should be in [0, ${turtleLogs.length}), got ${ind}.`));
+
+            let ind = parseInt(index);
+            if (ind < -1 || ind >= turtleLogs.length) {
+                console.error(chalk.red(
+                    `error: ind should be in [0, ${turtleLogs.length}), or -1 which means the last one, got ${ind}.`
+                ));
                 return;
+            }
+
+            if (ind === -1) {
+                ind = turtleLogs.length - 1;
             }
 
             selectedLogName = turtleLogs[ind];
