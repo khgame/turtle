@@ -56,7 +56,31 @@ export function getTimeString(format: string): string {
     return (now.toISOString()).substr(0, timeLength).replace(/:/g, "-").replace(/\./g, "_");
 }
 
-export async function followFileToStdout(path: string){
+export function printFileToStdout(path: string) {
+    // const stat = await promisify(fs.stat)(path);
+
+    return fs.readFileSync(path, {encoding: "UTF-8"});
+
+    // const stream = fs.createReadStream(path, {
+    //     start: 0,
+    //     encoding: "UTF-8"
+    // });
+    //
+    // let end = false;
+    // stream.on("data", (data) => {
+    //     process.stdout.write(data);
+    // });
+    //
+    // stream.on("end", () => {
+    //     end = true;
+    // });
+    //
+    // await forCondition(() => end);
+    // await forMs(100);
+}
+
+
+export async function followFileToStdout(path: string) {
     let currentSize = 0;
     while (true) {
         const stat = await promisify(fs.stat)(path);
