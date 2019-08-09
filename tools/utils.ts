@@ -59,8 +59,11 @@ export function getTimeString(format: string): string {
 export function printFileToStdout(path: string) {
     // const stat = await promisify(fs.stat)(path);
 
-    return fs.readFileSync(path, {encoding: "UTF-8"});
+    const log = fs.readFileSync(path, {encoding: "UTF-8"});
 
+    process.stdout.write(log);
+
+    return log;
     // const stream = fs.createReadStream(path, {
     //     start: 0,
     //     encoding: "UTF-8"

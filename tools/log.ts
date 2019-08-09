@@ -15,7 +15,7 @@ export const log: ICmd = {
         print: {
             alias: "p",
             desc: "the -f option causes log printed. ",
-            input: true
+            input: false
         },
     },
     exec: async (path: string, cmd: { follow: string, print: string }) => {
