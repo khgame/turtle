@@ -1,5 +1,4 @@
 import * as getPort from "get-port";
-import * as ip from "ip";
 import {Server} from "@khgame/jsonrpc/lib";
 import {CommandsAPI} from "./commands";
 import * as path from "path";
@@ -7,7 +6,7 @@ import {turtle} from "./index";
 import * as fs from "fs-extra";
 import {turtleVerbose} from "../core/utils/turtleVerbose";
 import chalk from "chalk";
-import {getPublicIP} from "ip-public";
+import {getExternalIP, getInternalIP} from "ip-public";
 
 export class Runtime {
 
@@ -55,8 +54,7 @@ export class Runtime {
     }
 
     protected initProcessInfo() {
-        this.ip = ip.address();
-
+        this.ip = getInternalIP();
         this.pid = process.pid;
     }
 
@@ -71,13 +69,13 @@ export class Runtime {
         const server = new Server();
         server.init([CommandsAPI]);
         server.listen(port);
-        const url = `${ip.address()}:${port}`;
+        const url = `${getInternalIP()}:${port}`;
         const target = server.getTarget(CommandsAPI);
         turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
         this.cmd_port = port;
         try {
             console.log(chalk.green(`try get public ip`));
-            this.ip_public = await getPublicIP();
+            this.ip_public = await getExternalIP();
         } catch (e) {
             console.log(chalk.red(`get public ip error: ${e} ${e.stack}`));
         }
