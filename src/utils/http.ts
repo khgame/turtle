@@ -2,7 +2,6 @@ import axios, {AxiosInstance} from "axios";
 import {turtle} from "../turtle";
 import {genMemCache} from "./memCache";
 
-
 let cache = genMemCache();
 
 export function createHttpClient(baseURL: string = "", timeout: number = 17000) {

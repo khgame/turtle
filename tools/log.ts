@@ -14,7 +14,7 @@ export const log: ICmd = {
         },
         print: {
             alias: "p",
-            desc: "the -f option causes log printed. ",
+            desc: "the -p option causes log to be printed. ",
             input: false
         },
     },

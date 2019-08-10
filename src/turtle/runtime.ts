@@ -6,9 +6,8 @@ import * as path from "path";
 import {turtle} from "./index";
 import * as fs from "fs-extra";
 import {turtleVerbose} from "../core/utils/turtleVerbose";
-import * as publicIp from "public-ip";
 import chalk from "chalk";
-import {http} from "../utils";
+import {getPublicIP} from "ip-public";
 
 export class Runtime {
 
@@ -78,43 +77,9 @@ export class Runtime {
         this.cmd_port = port;
         try {
             console.log(chalk.green(`try get public ip`));
-            this.ip_public = await publicIp.v4();
+            this.ip_public = await getPublicIP();
         } catch (e) {
-            try {
-                console.log(chalk.green(`try get public ip 2`));
-
-                const retIp = await Promise.race([
-                        "https://ipinfo.io/ip",
-                        "https://ip.cn",
-                        "http://icanhazip.com/",
-                        "http://ident.me/",
-                        "http://icanhazip.com/",
-                        "http://tnx.nl/ip",
-                        "http://ipecho.net/plain",
-                        "http://diagnostic.opendns.com/myip",
-                    ].map((urlIp: string) => http()
-                        .get(urlIp)
-                        .then(rsp => {
-                            if (rsp.status !== 200) {
-                                throw new Error(`rsp status error, expect 200, got ${rsp.status}`);
-                            }
-                            const rspData = rsp.data || (rsp as any).text;
-                            if (!rspData) {
-                                throw new Error(`rsp data error, got empty`);
-                            }
-
-                            // for unexpected return format
-                            return rspData.match(/\d+\.\d+\.\d+\.\d+/)[0];
-                        })
-                        .catch(e => console.log("get ip error:", urlIp, e, e.stack))
-                    )
-                );
-
-                console.log("retIp", retIp);
-            } catch (e) {
-                console.log(chalk.red(`get public ip error: ${e} ${e.stack}`));
-            }
-            // console.log(chalk.red(`get public ip error: ${e}`));
+            console.log(chalk.red(`get public ip error: ${e} ${e.stack}`));
         }
         console.log(chalk.green("got public ip"), chalk.blueBright(this.ip_public));
 
