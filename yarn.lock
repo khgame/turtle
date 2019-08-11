@@ -1560,7 +1560,7 @@ jsonfile@^4.0.0:
 
 kht@^0.0.12:
   version "0.0.12"
-  resolved "https://registry.npm.taobao.org/kht/download/kht-0.0.12.tgz?cache=0&sync_timestamp=1565334228956&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fkht%2Fdownload%2Fkht-0.0.12.tgz#718b56b6237107102c5427c58dfe60aca60f0751"
+  resolved "https://registry.npm.taobao.org/kht/download/kht-0.0.12.tgz#718b56b6237107102c5427c58dfe60aca60f0751"
   integrity sha1-cYtWtiNxBxAsVCfFjf5grKYPB1E=
   dependencies:
     "@babel/runtime" "^7.3.1"
