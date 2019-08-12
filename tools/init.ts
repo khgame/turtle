@@ -2,8 +2,11 @@ import {ConsoleHelper} from "kht";
 import * as fs from "fs-extra";
 import * as path from "path";
 import {ICmd} from "./_base";
+import {loadTemplate, pkgConf} from "./utils";
+import * as Path from "path";
+import chalk from "chalk";
 
-function packageJson(
+async function packageJson(
     name: string,
     version: string,
     desc: string,
@@ -12,7 +15,7 @@ function packageJson(
     author: string,
     license: string,
     drivers: string[],
-    template: string
+    tmpPath: string
 ) {
     const conf: any = {
         name: name,
@@ -39,11 +42,12 @@ function packageJson(
             "prepublishOnly": "npm run build"
         },
         dependencies: {
-            "@khgame/turtle": "^0.0.50",
+            "@khgame/turtle": `^${pkgConf.version || "0.0.72"}`,
         },
         devDependencies: {
             "chai": "^4.2.0",
             "cross-env": "^5.2.0",
+            "mocha": "^6.1.4",
             "nodemon": "^1.18.10",
             "rimraf": "^2.6.3",
             "ts-node": "^8.0.3",
@@ -69,10 +73,26 @@ function packageJson(
     }
 
 
+    if (tmpPath) {
+        console.log(`create package from ${tmpPath}`);
+        try {
+            const tplPackage = require(Path.resolve(tmpPath, "package.json"));
+            for (const key in tplPackage) {
+                for (const entryKey in tplPackage[key]) {
+                    conf[key][entryKey] = tplPackage[key][entryKey];
+                }
+            }
+
+        } catch (ex) {
+            console.log(`load template ${tmpPath} error: ${ex} ${ex.stack}`);
+            throw ex;
+        }
+    }
+
     return conf;
 }
 
-function defaultConf(name: string, port: string, drivers: string[]) {
+function getDefaultConf(name: string, port: string, drivers: string[]) {
     const conf: any = {
         name: name, // charge_center_higgs
         id: 0,
@@ -162,6 +182,18 @@ export const init: ICmd = {
             return;
         }
 
+        console.log(`
+    ██████  ██  ██  ██████  ██████  ██      ██████
+      ██    ██  ██  ██  ██    ██    ██      ██    
+      ██    ██  ██  ████      ██    ██      ██████
+      ██    ██  ██  ██  ██    ██    ██      ██
+      ██    ██████  ██  ██    ██    ██████  ██████ ` + chalk.grey(`@khgame
+      
+   ┌──────────────────────────────────────────────────────┐
+   │ - github - https://github.com/khgame/turtle          │ 
+   │ - npm - https://www.npmjs.com/package/@khgame/turtle │ 
+   └──────────────────────────────────────────────────────┘
+`));
         // console.log(cmd);
 
         const nameParam = typeof cmd.name === "string" ? cmd.name : null;
@@ -177,14 +209,27 @@ export const init: ICmd = {
         const driversStr: string = await ConsoleHelper.question("drivers (mongo redis discover/consul): ") as string || "";
         const drivers: string[] = driversStr.split(" ").filter(v => !!v);
 
-        const template: string = await ConsoleHelper.question("template: ") as string || "web-api";
+        const template: string = await ConsoleHelper.question("template (default: ''): ") as string || "";
+
+        const tplPath = await loadTemplate(template);
+
         let port = "";
-        if (template.trim() === "web-api") {
+        if (template.trim() === "web") {
             port = await ConsoleHelper.question("port (default: 8001): ") as string || "8001";
         }
 
         if (!fs.existsSync(pkgPath)) {
-            const json = packageJson(name, version, desc, repo, keywordsStr.split(" ").filter(v => !!v), author, license, drivers, template);
+            const json = await packageJson(
+                name,
+                version,
+                desc,
+                repo,
+                keywordsStr.split(" ").filter(v => !!v),
+                author,
+                license,
+                drivers,
+                tplPath
+            );
             fs.writeJSONSync(pkgPath, json, {
                 spaces: 2
             });
@@ -194,10 +239,12 @@ export const init: ICmd = {
             const defaultConfPath = path.resolve(srcPath, `defaultConf.ts`);
             const indexPath = path.resolve(srcPath, `index.ts`);
             const apiPath = path.resolve(srcPath, `api`);
+            const workersPath = path.resolve(srcPath, `workers`);
             const apiIndexPath = path.resolve(apiPath, `index.ts`);
             fs.ensureDirSync(srcPath);
+            fs.ensureDirSync(workersPath);
             fs.writeFileSync(defaultConfPath, `
-export const defaultConf = ${JSON.stringify(defaultConf(name, port, drivers), null, 4)}`);
+export const defaultConf = ${JSON.stringify(getDefaultConf(name, port, drivers), null, 4)}`);
             fs.ensureDirSync(apiPath);
             fs.writeFileSync(apiIndexPath, `
 import {genLogger, IApi, APIRunningState, CError} from "@khgame/turtle/lib";
@@ -346,12 +393,26 @@ cli.run();`);
   ]
 }
 `);
+            if (tplPath) {
+                console.log(chalk.grey(`copy files from ${tplPath}`));
+                fs.copySync(Path.resolve(tplPath, "src"), srcPath);
+                // fs.removeSync(tplPath);
+            }
 
-            console.log(`project ${name} created, some useful commands listed below:
-1. to initial your project, run 'npm install' or 'yarn install'
-2. to build your project, run 'npm run build' or 'yarn build'
-3. to start your project, run 'npm run start' or 'yarn start' 
+
+            console.log(`
+==========================================================================================
+    
+project ${name} created (${template || "no-template"}), some useful commands listed below:
+
+    1. to initial your project, run 'npm install' or 'yarn install'
+    2. to build your project, run 'npm run build' or 'yarn build'
+    3. to start your project, run 'npm run start' or 'yarn start'
+    
+==========================================================================================
             `);
+
+
         }
 
     }

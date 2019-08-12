@@ -1,6 +1,7 @@
-import {forCondition, forMs} from "kht/lib";
-import * as fs from "fs";
-import {promisify} from "util";
+import {forCondition, forMs, Git} from "kht/lib";
+import * as fs from "fs-extra";
+import {Stats} from "fs-extra";
+import * as Path from "path";
 
 export function getTurtleInfo(name: string): string {
     const paths = fs.readdirSync(".");
@@ -86,7 +87,7 @@ export function printFileToStdout(path: string) {
 export async function followFileToStdout(path: string) {
     let currentSize = 0;
     while (true) {
-        const stat = await promisify(fs.stat)(path);
+        const stat: Stats = await fs.stat(path);
         if (currentSize === 0) {
             currentSize = stat.size;
         }
@@ -110,3 +111,33 @@ export async function followFileToStdout(path: string) {
         currentSize = stat.size;
     }
 }
+
+
+export async function loadTemplate(url: string) {
+
+    if (!url) {
+        return null;
+    }
+
+    if (url.indexOf("/") < 0) {
+        url = `https://github.com/khgame/tur-${url}.git`;
+    }
+
+    const tplDir = Path.resolve(process.cwd(), "tpl");
+
+    console.log(`try fetch template from ${url}`);
+    await Git.fetchAsFiles(url, tplDir).catch(err => {
+        console.log("get tables failed", err);
+        fs.removeSync(tplDir);
+    });
+
+    return tplDir;
+}
+
+
+let _pkgConf: any = {};
+try {
+    _pkgConf = require("../package.json");
+} catch {
+}
+export const pkgConf = _pkgConf;

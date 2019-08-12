@@ -6,13 +6,10 @@ import {restart} from "./restart";
 import {stop} from "./stop";
 import {log} from "./log";
 import {createCommand} from "./_base";
+import {pkgConf} from "./utils";
 
 
-let pkgConf: any = {};
-try {
-    pkgConf = require("../package.json");
-} catch {
-}
+
 
 commander.version(pkgConf.version ||  process.version);
 
