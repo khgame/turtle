@@ -402,7 +402,7 @@ export class Turtle<IDrivers> {
         }
         await driverFactory.triggerWorkerClose();
 
-        turtleVerbose("API CLOSED");
+        turtleVerbose(`WORKERS CLOSED`);
     }
 
     public async closeAll() {
