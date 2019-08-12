@@ -367,6 +367,7 @@ export class Turtle<IDrivers> {
             this.log.info(`there are no workers to close.`);
             return;
         }
+
         for (const i in this.workers) {
             const worker = this.workers[i];
             switch (worker.runningState) {

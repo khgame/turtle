@@ -2,6 +2,7 @@ import {genLogger} from "../../utils";
 import {IWorker, WorkerRunningState} from "./interface";
 import {Logger} from "winston";
 import {forCondition, timeoutPromise} from "kht";
+import {turtle} from "../../turtle";
 
 export * from "./interface";
 
@@ -10,6 +11,10 @@ export abstract class Worker implements IWorker {
     enabled: boolean = false;
 
     processRunning: number = 0;
+
+    get canBeShutdown(): boolean {
+        return this.processRunning <= 0;
+    }
 
     runningState: WorkerRunningState = WorkerRunningState.NONE;
 
@@ -47,12 +52,14 @@ export abstract class Worker implements IWorker {
     }
 
     async shutdown(): Promise<boolean> {
+
         this.log.info("※※ start shutdown worker ※※");
         this.runningState = WorkerRunningState.CLOSING;
         try {
             this.enabled = false;
-            this.log.info(`- disable worker ${name} ✓`);
-            await timeoutPromise(60000, forCondition(() => this.processRunning <= 0));
+            this.log.info(`- disable worker ${this.name} ✓`);
+            await timeoutPromise(turtle.conf.setting.worker_close_timeout_ms || 300000, forCondition(() => this.processRunning <= 0));
+            // todo: should timeout?
             this.log.info(`- all running process of worker ${this.name} are closed ✓`);
             this.log.info(`※※ worker ${this.name} exited ※※`);
             return true;

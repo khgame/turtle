@@ -13,6 +13,8 @@ export interface IWorker {
 
     enabled: boolean;
 
+    canBeShutdown: boolean; // not in use yet
+
     processRunning: number;
 
     runningState: WorkerRunningState;
