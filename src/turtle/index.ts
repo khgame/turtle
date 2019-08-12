@@ -368,6 +368,7 @@ export class Turtle<IDrivers> {
             return;
         }
 
+        const closedWorkerNames: string[] = [];
         for (const i in this.workers) {
             const worker = this.workers[i];
             switch (worker.runningState) {
@@ -378,16 +379,18 @@ export class Turtle<IDrivers> {
                     break;
                 case WorkerRunningState.STARTING:
                     if (await worker.shutdown()) {
+                        closedWorkerNames.push(worker.name);
                         this.log.info(`worker ${i} is closed at starting procedure.`);
                     } else {
-                        this.log.warn(`close worker ${i} in starting procedure failed.`);
+                        this.log.warn(`close worker ${i} at starting procedure failed.`);
                     }
                     break;
                 case WorkerRunningState.RUNNING:
                     if (await worker.shutdown()) {
+                        closedWorkerNames.push(worker.name);
                         this.log.info(`worker ${i} is closed at running procedure.`);
                     } else {
-                        this.log.error(`close worker ${i} in running procedure failed.`);
+                        this.log.error(`close worker ${i} at running procedure failed.`);
                     }
                     break;
                 case WorkerRunningState.CLOSING:
@@ -402,7 +405,7 @@ export class Turtle<IDrivers> {
         }
         await driverFactory.triggerWorkerClose();
 
-        turtleVerbose(`WORKERS CLOSED`);
+        turtleVerbose(`WORKERS CLOSED`, ... closedWorkerNames);
     }
 
     public async closeAll() {
