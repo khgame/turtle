@@ -12,11 +12,13 @@ export interface IWorker {
     name: string;
 
     enabled: boolean;
+
+    processRunning: number;
+
     runningState: WorkerRunningState;
 
     start() : Promise<boolean>;
-    close() : Promise<boolean>;
+    shutdown() : Promise<boolean>;
 
     onStart() : Promise<boolean>;
-    onClose() : Promise<boolean>;
 }

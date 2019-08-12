@@ -206,6 +206,7 @@ export const init: ICmd = {
         const keywordsStr: string = await ConsoleHelper.question("keywords: ") as string;
         const author: string = await ConsoleHelper.question("author: ") as string;
         const license: string = await ConsoleHelper.question("license (default: MIT): ") as string || "MIT";
+        const port = await ConsoleHelper.question("port (default: 8001): ") as string || "8001";
         const driversStr: string = await ConsoleHelper.question("drivers (mongo redis discover/consul): ") as string || "";
         const drivers: string[] = driversStr.split(" ").filter(v => !!v);
 
@@ -213,10 +214,6 @@ export const init: ICmd = {
 
         const tplPath = await loadTemplate(template);
 
-        let port = "";
-        if (template.trim() === "web") {
-            port = await ConsoleHelper.question("port (default: 8001): ") as string || "8001";
-        }
 
         if (!fs.existsSync(pkgPath)) {
             const json = await packageJson(

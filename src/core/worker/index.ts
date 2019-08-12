@@ -1,18 +1,23 @@
 import {genLogger} from "../../utils";
 import {IWorker, WorkerRunningState} from "./interface";
 import {Logger} from "winston";
+import {forCondition, timeoutPromise} from "kht";
 
 export * from "./interface";
 
 export abstract class Worker implements IWorker {
-    enabled: boolean;
+
+    enabled: boolean = false;
+
+    processRunning: number = 0;
+
     runningState: WorkerRunningState = WorkerRunningState.NONE;
 
     public static workerMap: { [key: string]: IWorker } = {};
 
     public log: Logger;
 
-    public constructor(public readonly name: string) {
+    constructor(public readonly name: string) {
         if (Worker.workerMap[name]) {
             throw new Error(`worker ${name} are already exist.`);
         }
@@ -41,29 +46,22 @@ export abstract class Worker implements IWorker {
         }
     }
 
-    async close(): Promise<boolean> {
+    async shutdown(): Promise<boolean> {
         this.log.info("※※ start shutdown worker ※※");
         this.runningState = WorkerRunningState.CLOSING;
         try {
             this.enabled = false;
-            this.log.info("- close worker ✓");
-            if (await this.onClose()) {
-                this.log.info("※※ application exited ※※");
-                this.log.close();
-                this.runningState = WorkerRunningState.RUNNING;
-                return true;
-            } else {
-                this.runningState = WorkerRunningState.CLOSED;
-                return false;
-            }
+            this.log.info(`- disable worker ${name} ✓`);
+            await timeoutPromise(60000, forCondition(() => this.processRunning <= 0));
+            this.log.info(`- all running process of worker ${this.name} are closed ✓`);
+            this.log.info(`※※ worker ${this.name} exited ※※`);
+            return true;
         } catch (e) {
-            this.log.error(`※※ shutdown application failed ※※ ${e}`);
+            this.log.error(`※※ shutdown worker ${this.name} failed ※※ ${e}`);
             this.runningState = WorkerRunningState.RUNNING;
             return false;
         }
     }
-
-    public abstract onClose(): Promise<boolean> ;
 
     public abstract onStart(): Promise<boolean> ;
 }

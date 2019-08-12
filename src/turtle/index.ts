@@ -174,7 +174,7 @@ export class Turtle<IDrivers> {
     /**
      * start the api
      * @desc to start the api, the running state must be PREPARED|CLOSED, otherwise nothing will happen.
-     *       in the error situation (close failed or in wrong state), an Error will be thrown.
+     *       in the error situation (shutdown failed or in wrong state), an Error will be thrown.
      * @return {Promise<void>}
      */
     protected async startApi(api: IApi): Promise<this> {
@@ -321,9 +321,9 @@ export class Turtle<IDrivers> {
 
 
     /**
-     * close the api
-     * @desc to close the api, the running state must be STARTING|RUNNING, otherwise nothing will happen.
-     *       in the error situation (close failed or in wrong state), an Error will be thrown.
+     * shutdown the api
+     * @desc to shutdown the api, the running state must be STARTING|RUNNING, otherwise nothing will happen.
+     *       in the error situation (shutdown failed or in wrong state), an Error will be thrown.
      * @return {Promise<void>}
      */
     public async closeApi() {
@@ -376,14 +376,14 @@ export class Turtle<IDrivers> {
                     this.log.warn(`worker ${i} is in prepared but not running, nothing changed.`);
                     break;
                 case WorkerRunningState.STARTING:
-                    if (await worker.close()) {
+                    if (await worker.shutdown()) {
                         this.log.info(`worker ${i} is closed at starting procedure.`);
                     } else {
                         this.log.warn(`close worker ${i} in starting procedure failed.`);
                     }
                     break;
                 case WorkerRunningState.RUNNING:
-                    if (await worker.close()) {
+                    if (await worker.shutdown()) {
                         this.log.info(`worker ${i} is closed at running procedure.`);
                     } else {
                         this.log.error(`close worker ${i} in running procedure failed.`);
