@@ -154,27 +154,33 @@ export const init: ICmd = {
             input: true
         }
     },
-    exec: async (cmd: { [key: string]: string }) => {
+    exec: async (cmd: { name: string, version: string, desc: string, repo: string }) => {
+        // console.log(process);
         const pkgPath = path.resolve(process.cwd(), `package.json`);
         if (fs.existsSync(pkgPath)) {
             console.log(`[ERROR] package file ${pkgPath} is already exist.`);
             return;
         }
 
-        const name: string = cmd.name || await ConsoleHelper.question("name (turtle-project): ") as string || "turtle-project";
-        const version: string = cmd.version || await ConsoleHelper.question("version (0.0.1): ") as string || "0.0.1";
+        // console.log(cmd);
+
+        const nameParam = typeof cmd.name === "string" ? cmd.name : null;
+        const versionParam = typeof cmd.version === "string" ? cmd.version : null;
+
+        const name: string = nameParam || await ConsoleHelper.question("name (default: turtle-project): ") as string || "turtle-project";
+        const version: string = versionParam || await ConsoleHelper.question("version (default: 0.0.1): ") as string || "0.0.1";
         const desc: string = cmd.desc || await ConsoleHelper.question("description: ") as string;
         const repo: string = cmd.repo || await ConsoleHelper.question("repository: ") as string;
         const keywordsStr: string = await ConsoleHelper.question("keywords: ") as string;
         const author: string = await ConsoleHelper.question("author: ") as string;
-        const license: string = await ConsoleHelper.question("license (MIT): ") as string || "MIT";
+        const license: string = await ConsoleHelper.question("license (default: MIT): ") as string || "MIT";
         const driversStr: string = await ConsoleHelper.question("drivers (mongo redis discover/consul): ") as string || "";
         const drivers: string[] = driversStr.split(" ").filter(v => !!v);
 
         const template: string = await ConsoleHelper.question("template: ") as string || "web-api";
         let port = "";
         if (template.trim() === "web-api") {
-            port = await ConsoleHelper.question("port (8001): ") as string || "8001";
+            port = await ConsoleHelper.question("port (default: 8001): ") as string || "8001";
         }
 
         if (!fs.existsSync(pkgPath)) {

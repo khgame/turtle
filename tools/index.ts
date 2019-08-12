@@ -7,7 +7,14 @@ import {stop} from "./stop";
 import {log} from "./log";
 import {createCommand} from "./_base";
 
-commander.version(process.version);
+
+let pkgConf: any = {};
+try {
+    pkgConf = require("../package.json");
+} catch {
+}
+
+commander.version(pkgConf.version ||  process.version);
 
 createCommand({init, ls, restart, stop, log});
 
