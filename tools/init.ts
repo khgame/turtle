@@ -42,7 +42,7 @@ async function packageJson(
             "prepublishOnly": "npm run build"
         },
         dependencies: {
-            "@khgame/turtle": `^${pkgConf.version || "0.0.72"}`,
+            "@khgame/turtle": `^${pkgConf.version || "0.0.76"}`,
         },
         devDependencies: {
             "chai": "^4.2.0",
@@ -393,7 +393,7 @@ cli.run();`);
             if (tplPath) {
                 console.log(chalk.grey(`copy files from ${tplPath}`));
                 fs.copySync(Path.resolve(tplPath, "src"), srcPath);
-                // fs.removeSync(tplPath);
+                fs.removeSync(tplPath);
             }
 
 

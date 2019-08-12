@@ -123,7 +123,7 @@ export async function loadTemplate(url: string) {
         url = `https://github.com/khgame/tur-${url}.git`;
     }
 
-    const tplDir = Path.resolve(process.cwd(), "tpl");
+    const tplDir = Path.resolve(process.cwd(), ".turtle_tpl");
 
     console.log(`try fetch template from ${url}`);
     await Git.fetchAsFiles(url, tplDir).catch(err => {
