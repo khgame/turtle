@@ -6,6 +6,7 @@ import {IApi, IWorker} from "../core";
 import {IConf} from "../conf/interface";
 import {CommandsAPI} from "../turtle/commands";
 import {Client} from "@khgame/jsonrpc/lib";
+import {Command} from "commander";
 
 export class CommandLineApp {
 
@@ -71,7 +72,9 @@ export class CommandLineApp {
     }
 
     async main() {
-        commander.version(this.version)
+        const c: Command = commander;
+
+        c.version(this.version)
             .command("start")
             .description(`start running service: ${this.appName}`)
             .option("-d, --development",
@@ -94,7 +97,7 @@ export class CommandLineApp {
 config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
             });
 
-        commander.command("extract")
+        c.command("extract")
             .description("extract default config to a file")
             .option("-p, --path <path>", `the export path (default: ./${this.defaultConfName})`)
             .action((options) => {
@@ -106,7 +109,7 @@ config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
                 process.exit(0);
             });
 
-        commander.command("reload")
+        c.command("reload")
             .description("reload the service")
             .option("-p, --port <port>", `the port of the process`)
             .action(async (options) => {
@@ -122,7 +125,9 @@ config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
                 process.exit(0);
             });
 
-        commander.parse(process.argv);
+        await this.customMethods(c);
+
+        c.parse(process.argv);
 
         /**
          * todo list
@@ -131,6 +136,10 @@ config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
          * - reload log
          * - signal
          */
+    }
+
+    async customCommands(c: Command) {
+
     }
 
     run() {
