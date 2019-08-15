@@ -141,7 +141,8 @@ export class Turtle<IDrivers> {
         }
     }
 
-    protected async tryInitial() {
+    protected async tryInitial(cmdControllers: Function[] = []) {
+
         if (this.initialed) {
             return;
         }
@@ -157,7 +158,7 @@ export class Turtle<IDrivers> {
                 this.runtime.runtimeFilePath}) .`);
         }
 
-        await this.runtime.listenCommands();
+        await this.runtime.listenCommands(cmdControllers);
 
         process.on("SIGTERM", () => this.shutdown("SIGTERM"));
         process.on("SIGINT", () => this.shutdown("SIGINT"));
@@ -313,8 +314,8 @@ export class Turtle<IDrivers> {
         return this;
     }
 
-    public async startAll(api: IApi, workers?: IWorker[]) {
-        await this.tryInitial();
+    public async startAll(api: IApi, workers?: IWorker[], cmdControllers?: Function[]) {
+        await this.tryInitial(cmdControllers);
         await this.startApi(api);
         await this.startWorkers(workers);
     }

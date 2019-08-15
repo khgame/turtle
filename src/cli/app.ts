@@ -16,7 +16,8 @@ export class CommandLineApp {
         protected drivers: Array<string | Function>,
         protected api: () => IApi,
         protected workers: Array<() => IWorker>,
-        protected defaultConf: IConf
+        protected defaultConf: IConf,
+        protected cmdControllers?: Array<() => Function>
     ) {
 
     }
@@ -92,7 +93,11 @@ export class CommandLineApp {
                 this.setConfig(options && options.path, options && options.port);
                 // console.log("config path :", turtle.confPath, this.drivers, this.apis);
                 await turtle.initialDrivers(this.drivers);
-                await turtle.startAll(this.api(), this.workers ? this.workers.map(f => f()) : undefined);
+                await turtle.startAll(
+                    this.api(),
+                    this.workers ? this.workers.map(f => f()) : undefined,
+                    this.cmdControllers
+                );
                 console.log(`turtle started:
 config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
             });
@@ -125,7 +130,7 @@ config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
                 process.exit(0);
             });
 
-        await this.customMethods(c);
+        await this.customCommands(c);
 
         c.parse(process.argv);
 

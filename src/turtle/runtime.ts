@@ -64,10 +64,10 @@ export class Runtime {
         this.npm_lifecycle_script = process.env.npm_lifecycle_script;
     }
 
-    async listenCommands() {
+    async listenCommands(cmdControllers: Function[] = []) {
         const port = await getPort({port: getPort.makeRange(13000, 13100)});
         const server = new Server();
-        server.init([CommandsAPI]);
+        server.init([CommandsAPI, ... cmdControllers]);
         server.listen(port);
         const url = `${getInternalIP()}:${port}`;
         const target = server.getTarget(CommandsAPI);

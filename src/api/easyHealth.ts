@@ -94,6 +94,10 @@ export class EasyHealth implements IApi {
             }
         };
         await turtle.initialDrivers(["discover/consul"]);
-        await turtle.startAll(new EasyHealth(fnGetHealthState, healthApi));
+        await turtle.startAll(
+            new EasyHealth(fnGetHealthState, healthApi),
+            [],
+            []
+        );
     }
 }
