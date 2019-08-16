@@ -7,6 +7,7 @@ import {IConf} from "../conf/interface";
 import {CommandsAPI} from "../turtle/commands";
 import {Client} from "@khgame/jsonrpc/lib";
 import {Command} from "commander";
+import {genLogger} from "../utils";
 
 export class CommandLineApp {
 
@@ -92,14 +93,16 @@ export class CommandLineApp {
             .action(async (options) => {
                 this.setConfig(options && options.path, options && options.port);
                 // console.log("config path :", turtle.confPath, this.drivers, this.apis);
+                const logger = genLogger();
+                logger.info(`※※ Enter start procedure (configPath: ${turtle.confPath}) ※※`);
                 await turtle.initialDrivers(this.drivers);
+                // logger.info(" => start all");
                 await turtle.startAll(
                     this.api(),
                     this.workers ? this.workers.map(f => f()) : undefined,
                     this.cmdControllers
                 );
-                console.log(`turtle started:
-config(${turtle.confPath}) => ${JSON.stringify(turtle.conf)}`);
+                logger.info(`※※ Turtle started: (config: ${JSON.stringify(turtle.conf)}) ※※`);
             });
 
         c.command("extract")
