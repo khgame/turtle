@@ -1,4 +1,4 @@
-import {APIRunningState, CError, genAssert, IApi, turtle} from "../../src/";
+import {APIRunningState, CError, genAssert, genLogger, IApi, turtle} from "../../src/";
 import * as Path from "path";
 import chalk from "chalk";
 
@@ -49,10 +49,15 @@ async function start() {
 start().then(() => {
     console.log("service started");
 
-    let assert = genAssert("testPrefix");
+    let assert = genAssert("ep-api");
+    let log = genLogger("ep-api");
+
+    log.info("test log");
+    console.log("test console.log");
+
 
     try {
-        assert.cok(false, 123, () => "test");
+        assert.cok(false, 123, () => "test assert cok");
     } catch (ex) {
         console.log((ex as CError).code);
         console.log((ex as CError).message);
