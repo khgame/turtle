@@ -16,21 +16,25 @@ export function turtleVerbose(title: string, ...arr: any[]) {
     const strs: string[] = arr.map(a => typeof a === "string" ? a : `${a}`);
     const maxLength = strs.reduce((p, s) => s.length > p ? s.length : p, 8 + title.length);
 
+    const empty = strs.length <= 0;
+
     console.log(
-        _frame("   ┌─")
+        _frame(empty ? "   ⊙─ " : "   ⊙─ ")
         + _title("TURTLE: " + title + " ")
-        + _frame("┄".repeat(maxLength - 4 - title.length) + "┐")
+        + _frame(empty ? "-⊙" : ("┄".repeat(maxLength - 5 - title.length) + "⊙"))
     );
     // console.log("   │ TURTLE: " + title + " ".repeat(maxLength - 4 - title.length) + " │");
     strs.forEach(s => {
         console.log(
-            _frame("   ┆ ⊙ ")
+            _frame("   ┆ ◇ ")
             + _term(s + " ".repeat(maxLength + 2 - s.length))
             + _frame(" ┆")
         );
     });
-    console.log(
-        _frame("   └─┴┄┈" + " ".repeat(maxLength) + "┈┄┘"));
+    if (!empty) {
+        console.log(
+            _frame("   └─┴┄┈" + " ".repeat(maxLength) + "┈┄┘"));
+    }
 }
 
 export function turtlePrint(out: any) {
