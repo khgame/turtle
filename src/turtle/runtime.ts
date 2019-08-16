@@ -74,12 +74,11 @@ export class Runtime {
         turtleVerbose("CLI INITIALED", `serve at: http://${url}`);
         this.cmd_port = port;
         try {
-            console.log(chalk.green(`try get public ip`));
             this.ip_public = await getExternalIP();
         } catch (e) {
             console.log(chalk.red(`get public ip error: ${e} ${e.stack}`));
         }
-        console.log(chalk.green("got public ip"), chalk.blueBright(this.ip_public));
+        turtleVerbose("GOT PUBLIC IP", this.ip_public);
 
         this.save();
     }
