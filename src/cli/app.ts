@@ -81,10 +81,14 @@ export class CommandLineApp {
             .description(`start running service: ${this.appName}`)
             .option("-d, --development",
                 `(default env setting) similar to set NODE_ENV=development, and will read ${this.appName}.development.json at executing position as config by default`,
-                () => process.env.NODE_ENV = "development")
+                () => {
+                    process.env.NODE_ENV = "development";
+                })
             .option("-p, --production",
                 `similar to set NODE_ENV=production, and will read ${this.appName}.production.json at executing position as config by default`,
-                () => process.env.NODE_ENV = "production")
+                () => {
+                    process.env.NODE_ENV = "production";
+                })
             .option("-c, --config <path>",
                 "set config path, and the specified conf will override the default one set by NODE_ENV",
                 path => turtle.setConf(path, true))
@@ -93,6 +97,7 @@ export class CommandLineApp {
             .action(async (options) => {
                 this.setConfig(options && options.path, options && options.port);
                 // console.log("config path :", turtle.confPath, this.drivers, this.apis);
+                turtle.runtime.updateEnvInfo();
                 const logger = genLogger();
                 logger.info(`※※ Enter start procedure (configPath: ${turtle.confPath}) ※※`);
                 await turtle.initialDrivers(this.drivers);

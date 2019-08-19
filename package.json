@@ -28,6 +28,7 @@
     "ep:api-p": "NODE_ENV=production ts-node ./example/api",
     "ep:driver": "ts-node ./example/driver",
     "ep:cli": "ts-node ./example/cli start",
+    "ep:cli-p": "ts-node ./example/cli start -p",
     "ep:easyHealth": "ts-node ./example/easyHealth start"
   },
   "repository": {

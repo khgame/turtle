@@ -41,17 +41,11 @@ export class Runtime {
     // todo: api status
 
     constructor() {
-        this.initEnvInfo();
+        this.updateEnvInfo();
         this.initProcessInfo();
         this.initRuntimeInfo();
     }
 
-    protected initEnvInfo() {
-        this.cwd = process.cwd();
-        this.node_env = process.env.NODE_ENV;
-        this.pkg_version = process.env.npm_package_version;
-        this.in_dev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
-    }
 
     protected initProcessInfo() {
         this.ip = getInternalIP();
@@ -62,6 +56,14 @@ export class Runtime {
         this.init_time = new Date();
         this.start_cmd = process.argv;
         this.npm_lifecycle_script = process.env.npm_lifecycle_script;
+    }
+
+    public updateEnvInfo(): this {
+        this.cwd = process.cwd();
+        this.node_env = process.env.NODE_ENV;
+        this.pkg_version = process.env.npm_package_version;
+        this.in_dev = !process.env.NODE_ENV || process.env.NODE_ENV === "development";
+        return this;
     }
 
     async listenCommands(cmdControllers: Function[] = []) {

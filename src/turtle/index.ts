@@ -24,6 +24,10 @@ export class Turtle<IDrivers> {
     }
 
     protected _log: Logger;
+    //
+    // public get runtime(): Runtime {
+    //     return this._runtime.updateEnvInfo();
+    // }
 
     public runtime: Runtime = new Runtime();
 

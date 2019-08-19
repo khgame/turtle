@@ -191,12 +191,13 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             check = healthConfToCheck(this.conf.health);
         }
 
+        const runtime = turtle.runtime;
         const regResult = await this.register({
             id: `${turtle.conf.name}:${turtle.conf.id}`,
             name: turtle.conf.name,
             tags: this.conf.tags,
-            address: turtle.runtime.ip,
-            port: turtle.runtime.port,
+            address: runtime.ip,
+            port: runtime.port,
             check,
             checks
         });
@@ -409,10 +410,13 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
             return NodeStatus.NOTEXIST;
         } else if (service.healthy) {
             return NodeStatus.HEALTHY;
-        } else if (service.address === turtle.runtime.ip && service.port === turtle.runtime.port) {
-            return NodeStatus.UNHEALTHY_ME;
         } else {
-            return NodeStatus.UNHEALTHY_OTHER;
+            const runtime = turtle.runtime;
+            if (service.address === runtime.ip && service.port === runtime.port) {
+                return NodeStatus.UNHEALTHY_ME;
+            } else {
+                return NodeStatus.UNHEALTHY_OTHER;
+            }
         }
     }
 

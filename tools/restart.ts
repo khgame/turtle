@@ -86,7 +86,7 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
 
         let processName: string = ""; // todo: sometimes these will not work
         let args: string[] = [];
-        if (runtime.npm_lifecycle_script) {
+        if (runtime.npm_lifecycle_script) { // todo: lost flags
             console.log(chalk.grey(`using npm_lifecycle_script`));
             const CMDs = (runtime.npm_lifecycle_script as string).split(" ").filter(x => x !== "");
             processName = CMDs[0];
