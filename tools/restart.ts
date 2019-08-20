@@ -2,7 +2,7 @@ import chalk from "chalk";
 import * as fs from "fs";
 import {ICmd} from "easy-commander";
 import {forCondition, timeoutPromise} from "kht/lib";
-import {alive, followFileToStdout, getTimeString, getTurtleInfo} from "./utils";
+import {alive, followFileToStdout, getTimeString, getTurtleInfo, printTurtlesList} from "./utils";
 import {spawn} from "child_process";
 
 export const restart: ICmd = {
@@ -24,19 +24,18 @@ export const restart: ICmd = {
             input: false
         }
     },
-    exec: async (name: string, cmd: { info?: string, out?: string, timestamp?: string, follow?: boolean }) => {
-        if (!cmd) {
-            console.error(`failed: name of turtle process must be given.`);
+    exec: async (name: string, cmd: { out?: string, timestamp?: string, follow?: boolean }) => {
+        if (!cmd) { // if name are not exist, cmd will be move to the first argument's position
+            const paths = fs.readdirSync(".");
+            const turtles = paths
+                .filter(p => p.startsWith(".") && p.endsWith(".turtle"));
+            console.error(`try to restart turtle process failed: name of turtle process must be given.
+These turtle process are detected in this directory:
+${printTurtlesList(turtles, {process: true})}
+`);
             return;
         }
-        const paths = fs.readdirSync(".");
-        const info: { [key: string]: any } = {};
-        const turtles = paths
-            .filter(p => p.startsWith(".") && p.endsWith(".turtle"));
 
-        turtles.forEach(fName => {
-            info[fName] = JSON.parse(fs.readFileSync(fName, {encoding: "UTF-8"}));
-        });
 
         const path = getTurtleInfo(name);
 
@@ -91,6 +90,10 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
             console.log(chalk.grey(`using start_cmd`));
             processName = runtime.start_cmd[0];
             args = runtime.start_cmd.slice(1);
+        }
+
+        if (runtime.node_env) {
+            processName = `NODE_ENV=${runtime.node_env} ${processName}`;
         }
 
         if (!processName) {

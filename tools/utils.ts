@@ -57,7 +57,7 @@ export function checkTurtlesAlives(turtlesPathes: string[]) {
     }));
 }
 
-export function printTurtlesList(turtlesPathes: string[], option: {process?: boolean, info?: boolean}) {
+export function printTurtlesList(turtlesPathes: string[], option: {process?: boolean, info?: boolean} = {}) {
     return checkTurtlesAlives(turtlesPathes).forEach(t => {
         const {name, runtime, active} = t;
         const print: any[] = [name];
