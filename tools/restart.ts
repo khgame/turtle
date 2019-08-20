@@ -31,8 +31,7 @@ export const restart: ICmd = {
             const turtles = paths.filter(p => p.startsWith(".") && p.endsWith(".turtle"));
 
             console.error(`try to restart turtle process failed: name of turtle process must be given.
-These turtle process are detected in this directory:
-`);
+These turtle process are detected in this directory:`);
             printTurtlesList(turtles, {process: true});
             return;
         }
