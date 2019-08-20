@@ -29,7 +29,7 @@ async function packageJson(
             type: "git",
             url: repo
         },
-        keywords: keywords,
+        keywords: [... keywords, "khgame", "turtle"],
         author: author,
         license: license,
         scripts: {
@@ -154,147 +154,11 @@ function getDefaultConf(name: string, port: string, drivers: string[]) {
     return conf;
 }
 
-export const init: ICmd = {
-    desc: "init a turtle project",
-    args: {
-        name: {
-            alias: "n",
-            input: true
-        },
-        version: {
-            alias: "v",
-            input: true
-        },
-        desc: {
-            alias: "d",
-            input: true
-        },
-        repo: {
-            alias: "r",
-            input: true
-        }
-    },
-    exec: async (cmd: { name: string, version: string, desc: string, repo: string }) => {
-        // console.log(process);
-        const pkgPath = path.resolve(process.cwd(), `package.json`);
-        if (fs.existsSync(pkgPath)) {
-            console.log(`[ERROR] package file ${pkgPath} is already exist.`);
-            return;
-        }
+async function createTsFiles() {
+    const tsLintPath = path.resolve(process.cwd(), `tslint.json`);
+    const tsConfigPath = path.resolve(process.cwd(), `tsconfig.json`);
 
-        console.log(`
-    ██████  ██  ██  ██████  ██████  ██      ██████
-      ██    ██  ██  ██  ██    ██    ██      ██    
-      ██    ██  ██  ████      ██    ██      ██████
-      ██    ██  ██  ██  ██    ██    ██      ██
-      ██    ██████  ██  ██    ██    ██████  ██████ ` + chalk.grey(`@khgame
-      
-   ┌──────────────────────────────────────────────────────┐
-   │ - github - https://github.com/khgame/turtle          │ 
-   │ - npm - https://www.npmjs.com/package/@khgame/turtle │ 
-   └──────────────────────────────────────────────────────┘
-`));
-        // console.log(cmd);
-
-        const nameParam = typeof cmd.name === "string" ? cmd.name : null;
-        const versionParam = typeof cmd.version === "string" ? cmd.version : null;
-
-        const name: string = nameParam || await ConsoleHelper.question("name (default: turtle-project): ") as string || "turtle-project";
-        const version: string = versionParam || await ConsoleHelper.question("version (default: 0.0.1): ") as string || "0.0.1";
-        const desc: string = cmd.desc || await ConsoleHelper.question("description: ") as string;
-        const repo: string = cmd.repo || await ConsoleHelper.question("repository: ") as string;
-        const keywordsStr: string = await ConsoleHelper.question("keywords: ") as string;
-        const author: string = await ConsoleHelper.question("author: ") as string;
-        const license: string = await ConsoleHelper.question("license (default: MIT): ") as string || "MIT";
-        const port = await ConsoleHelper.question("port (default: 8001): ") as string || "8001";
-        const driversStr: string = await ConsoleHelper.question("drivers (mongo redis discover/consul): ") as string || "";
-        const drivers: string[] = driversStr.split(" ").filter(v => !!v);
-
-        const template: string = await ConsoleHelper.question("template (default: ''): ") as string || "";
-
-        const tplPath = await loadTemplate(template);
-
-
-        if (!fs.existsSync(pkgPath)) {
-            const json = await packageJson(
-                name,
-                version,
-                desc,
-                repo,
-                keywordsStr.split(" ").filter(v => !!v),
-                author,
-                license,
-                drivers,
-                tplPath
-            );
-            fs.writeJSONSync(pkgPath, json, {
-                spaces: 2
-            });
-            const srcPath = path.resolve(process.cwd(), `src`);
-            const lintPath = path.resolve(process.cwd(), `tslint.json`);
-            const tsconfigPath = path.resolve(process.cwd(), `tsconfig.json`);
-            const defaultConfPath = path.resolve(srcPath, `defaultConf.ts`);
-            const indexPath = path.resolve(srcPath, `index.ts`);
-            const apiPath = path.resolve(srcPath, `api`);
-            const workersPath = path.resolve(srcPath, `workers`);
-            const apiIndexPath = path.resolve(apiPath, `index.ts`);
-            fs.ensureDirSync(srcPath);
-            fs.ensureDirSync(workersPath);
-            fs.writeFileSync(defaultConfPath, `
-export const defaultConf = ${JSON.stringify(getDefaultConf(name, port, drivers), null, 4)}`);
-            fs.ensureDirSync(apiPath);
-            fs.writeFileSync(apiIndexPath, `
-import {genLogger, IApi, APIRunningState, CError} from "@khgame/turtle/lib";
-
-export class Api implements IApi {
-
-    log = genLogger("api");
-    
-    
-    runningState: APIRunningState = APIRunningState.NONE;
-    
-    constructor() {
-        this.initial();
-    }
-
-    async initial() {
-        /** do initial procedure here */
-        this.runningState = APIRunningState.PREPARED;
-    }
-
-    async start(port: number) {
-        this.runningState = APIRunningState.STARTING;
-        this.log.info('api started');
-        this.runningState = APIRunningState.RUNNING;
-        this.log.info('★★★ HELLO WORLD ★★★');
-        return true;
-    };
-    
-    async close() {
-        this.runningState = APIRunningState.CLOSING;
-        this.log.info('api closed');
-        this.runningState = APIRunningState.CLOSED;
-        return true;
-    };
-            
-}
-`);
-            fs.writeFileSync(indexPath, `
-import {defaultConf} from "./defaultConf";
-import {CommandLineApp, IConf} from "@khgame/turtle/lib";
-
-/** you should implement this (or using template) */
-import {Api} from "./api";
-
-const cli = new CommandLineApp(
-    "${name}",
-    "${version}",
-    ${JSON.stringify(drivers)},
-    () => new Api(),
-    [], defaultConf as IConf);
-cli.run();`);
-
-            fs.writeFileSync(lintPath, `
+    fs.writeFileSync(tsLintPath, `
 {
   "linterOptions": {
     "autoFixOnSave": true,
@@ -359,7 +223,7 @@ cli.run();`);
 }
 `);
 
-            fs.writeFileSync(tsconfigPath, `
+    fs.writeFileSync(tsConfigPath, `
 {
   "compilerOptions": {
     "baseUrl": ".",
@@ -390,17 +254,98 @@ cli.run();`);
   ]
 }
 `);
-            if (tplPath) {
-                console.log(chalk.grey(`copy files from ${tplPath}`));
-                fs.copySync(Path.resolve(tplPath, "src"), srcPath);
-                fs.removeSync(tplPath);
-            }
+}
+
+async function createFiles(
+    srcPath: string,
+    name: string,
+    version: string,
+    drivers: string[],
+    tplPath: string,
+    templateName: string) {
+
+    const indexPath = path.resolve(srcPath, `index.ts`);
+
+    const workersPath = path.resolve(srcPath, `workers`);
+    const apiPath = path.resolve(srcPath, `api`);
+    const apiIndexPath = path.resolve(apiPath, `index.ts`);
+
+    fs.ensureDirSync(workersPath);
+    fs.ensureDirSync(apiPath);
+
+    fs.writeFileSync(apiIndexPath, `
+import {genLogger, IApi, APIRunningState, CError} from "@khgame/turtle";
+
+export class Api implements IApi {
+
+    log = genLogger("api");
+    
+    
+    runningState: APIRunningState = APIRunningState.NONE;
+    
+    constructor() {
+        this.initial();
+    }
+
+    async initial() {
+        /** do initial procedure here */
+        this.runningState = APIRunningState.PREPARED;
+    }
+
+    async start(port: number) {
+        this.runningState = APIRunningState.STARTING;
+        this.log.info('api started');
+        this.runningState = APIRunningState.RUNNING;
+        this.log.info('★★★ HELLO WORLD ★★★');
+        return true;
+    };
+    
+    async close() {
+        this.runningState = APIRunningState.CLOSING;
+        this.log.info('api closed');
+        this.runningState = APIRunningState.CLOSED;
+        return true;
+    };
+            
+}
+`);
+    fs.writeFileSync(indexPath, `
+import {defaultConf} from "./defaultConf";
+import {CommandLineApp, IConf} from "@khgame/turtle";
+
+/** you should implement this (or using template) */
+import {Api} from "./api";
+
+const cli = new CommandLineApp(
+    "${name}",
+    "${version}",
+    ${JSON.stringify(drivers)},
+    () => new Api(),
+    [], 
+    defaultConf as IConf
+);
+cli.run();`);
 
 
-            console.log(`
+    if (tplPath) {
+        console.log(chalk.grey(`copy files from ${tplPath}`));
+        fs.copySync(Path.resolve(tplPath, "src"), srcPath);
+
+        let indexCode = fs.readFileSync(indexPath).toString("utf-8");
+        if (indexCode.includes("__TURTLE_DRIVERS__")) { // consider this
+            indexCode = indexCode.replace(/__TURTLE_DRIVERS__/g, JSON.stringify(drivers));
+            fs.writeFileSync(indexPath, indexCode, { encoding: "utf-8"});
+        }
+
+
+        fs.removeSync(tplPath);
+    }
+
+
+    console.log(`
 ==========================================================================================
     
-project ${name} created (${template || "no-template"}), some useful commands listed below:
+project ${name} created (${templateName || "no-template"}), some useful commands listed below:
 
     1. to initial your project, run 'npm install' or 'yarn install'
     2. to build your project, run 'npm run build' or 'yarn build'
@@ -408,9 +353,101 @@ project ${name} created (${template || "no-template"}), some useful commands lis
     
 ==========================================================================================
             `);
+}
 
-
+export const init: ICmd = {
+    desc: "init a turtle project",
+    args: {
+        name: {
+            alias: "n",
+            input: true
+        },
+        version: {
+            alias: "v",
+            input: true
+        },
+        desc: {
+            alias: "d",
+            input: true
+        },
+        repo: {
+            alias: "r",
+            input: true
+        }
+    },
+    exec: async (cmd: { name: string, version: string, desc: string, repo: string }) => {
+        // console.log(process);
+        const pkgPath = path.resolve(process.cwd(), `package.json`);
+        if (fs.existsSync(pkgPath)) {
+            console.log(`[ERROR] package file ${pkgPath} is already exist.`);
+            return;
         }
 
-    }
+        console.log(`
+    ██████  ██  ██  ██████  ██████  ██      ██████
+      ██    ██  ██  ██  ██    ██    ██      ██    
+      ██    ██  ██  ████      ██    ██      ██████
+      ██    ██  ██  ██  ██    ██    ██      ██
+      ██    ██████  ██  ██    ██    ██████  ██████ ` + chalk.grey(`@khgame
+      
+   ┌──────────────────────────────────────────────────────┐
+   │ - github - https://github.com/khgame/turtle          │ 
+   │ - npm - https://www.npmjs.com/package/@khgame/turtle │ 
+   └──────────────────────────────────────────────────────┘
+`));
+        // console.log(cmd);
+
+        const nameParam = typeof cmd.name === "string" ? cmd.name : null;
+        const versionParam = typeof cmd.version === "string" ? cmd.version : null;
+
+        const name: string = nameParam || await ConsoleHelper.question("name (default: turtle-project): ") as string || "turtle-project";
+        const version: string = versionParam || await ConsoleHelper.question("version (default: 0.0.1): ") as string || "0.0.1";
+        const desc: string = cmd.desc || await ConsoleHelper.question("description: ") as string;
+        const repo: string = cmd.repo || await ConsoleHelper.question("repository: ") as string;
+        const keywordsStr: string = await ConsoleHelper.question("keywords: ") as string;
+        const author: string = await ConsoleHelper.question("author: ") as string;
+        const license: string = await ConsoleHelper.question("license (default: MIT): ") as string || "MIT";
+        const port = await ConsoleHelper.question("port (default: 8001): ") as string || "8001";
+        const driversStr: string = await ConsoleHelper.question("drivers (mongo redis discover/consul): ") as string || "";
+        const drivers: string[] = driversStr.split(" ").filter(v => !!v);
+
+        const template: string = await ConsoleHelper.question("template (default: ''): ") as string || "";
+
+        const tplPath = await loadTemplate(template);
+
+        /** write package.json file */
+        const json = await packageJson(
+            name,
+            version,
+            desc,
+            repo,
+            keywordsStr.split(" ").filter(v => !!v),
+            author,
+            license,
+            drivers,
+            tplPath
+        );
+        fs.writeJSONSync(pkgPath, json, {
+            spaces: 2
+        });
+
+        const srcPath = path.resolve(process.cwd(), `src`);
+        fs.ensureDirSync(srcPath);
+        const defaultConfPath = path.resolve(srcPath, `defaultConf.ts`);
+
+        fs.writeFileSync(defaultConfPath, `
+export const defaultConf = ${JSON.stringify(getDefaultConf(name, port, drivers), null, 4)}`);
+
+        await createTsFiles();
+        await createFiles(
+            srcPath,
+            name,
+            version,
+            drivers,
+            tplPath,
+            template
+        );
+
+    },
+
 };
