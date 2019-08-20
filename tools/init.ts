@@ -1,10 +1,10 @@
 import {ConsoleHelper} from "kht";
 import * as fs from "fs-extra";
 import * as path from "path";
-import {ICmd} from "./_base";
 import {loadTemplate, pkgConf} from "./utils";
 import * as Path from "path";
 import chalk from "chalk";
+import {ICmd} from "easy-commander";
 
 async function packageJson(
     name: string,
@@ -42,7 +42,7 @@ async function packageJson(
             "prepublishOnly": "npm run build"
         },
         dependencies: {
-            "@khgame/turtle": `^${pkgConf.version || "0.0.76"}`,
+            "@khgame/turtle": `^${pkgConf.version || process.env.npm_package_version || "0.0.80"}`,
         },
         devDependencies: {
             "chai": "^4.2.0",

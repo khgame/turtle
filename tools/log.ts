@@ -1,6 +1,6 @@
 import {ConsoleHelper} from "kht";
 import * as fs from "fs";
-import {alive, ICmd} from "./_base";
+import {ICmd} from "easy-commander";
 import chalk from "chalk";
 import {followFileToStdout, printFileToStdout} from "./utils";
 

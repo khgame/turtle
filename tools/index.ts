@@ -1,18 +1,16 @@
 #!/usr/bin/env node
-import * as commander from "commander";
+import {cmdMaker} from "easy-commander";
 import {init} from "./init";
 import {ls} from "./ls";
 import {restart} from "./restart";
 import {stop} from "./stop";
 import {log} from "./log";
-import {createCommand} from "./_base";
 import {pkgConf} from "./utils";
 
+cmdMaker.append({init, ls, restart, stop, log}).start({ version : pkgConf.version || process.env.npm_package_version});
 
-
-
-commander.version(pkgConf.version ||  process.version);
-
-createCommand({init, ls, restart, stop, log});
-
-commander.parse(process.argv);
+// commander.version(pkgConf.version || process.env.npm_package_version || "0.0.1");
+//
+// createCommand({init, ls, restart, stop, log});
+//
+// commander.parse(process.argv);

@@ -1,13 +1,9 @@
-import {ConsoleHelper} from "kht";
-
 import chalk from "chalk";
-
-import {exec, spawn} from "child_process";
-
 import * as fs from "fs";
-import {alive, ICmd} from "./_base";
+import {ICmd} from "easy-commander";
 import {forCondition, timeoutPromise} from "kht/lib";
-import {followFileToStdout, getTimeString, getTurtleInfo} from "./utils";
+import {alive, followFileToStdout, getTimeString, getTurtleInfo} from "./utils";
+import {spawn} from "child_process";
 
 export const restart: ICmd = {
     desc: "restart <name>",

@@ -3,6 +3,19 @@ import * as fs from "fs-extra";
 import {Stats} from "fs-extra";
 import * as Path from "path";
 
+export function alive(pid: number): boolean {
+    try {
+        process.kill(pid, 0);
+        // console.log(pid);
+        return true;
+    }
+    catch (e) {
+        // console.log(pid, e.code);
+        return false;
+    }
+}
+
+
 export function getTurtleInfo(name: string): string {
     const paths = fs.readdirSync(".");
     const info: { [key: string]: any } = {};

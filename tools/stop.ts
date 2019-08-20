@@ -1,10 +1,8 @@
-import {ConsoleHelper} from "kht";
-
 import * as fs from "fs";
-import {alive, ICmd} from "./_base";
+import {ICmd} from "easy-commander";
 import {forCondition, timeoutPromise} from "kht/lib";
 import chalk from "chalk";
-import {getTurtleInfo} from "./utils";
+import {alive, getTurtleInfo} from "./utils";
 
 
 export const stop: ICmd = {
