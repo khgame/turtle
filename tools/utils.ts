@@ -2,6 +2,7 @@ import {forCondition, forMs, Git} from "kht/lib";
 import * as fs from "fs-extra";
 import {Stats} from "fs-extra";
 import * as Path from "path";
+import chalk from "chalk";
 
 export function alive(pid: number): boolean {
     try {
@@ -44,6 +45,33 @@ export function getTurtleInfo(name: string): string {
     }
 
     return path;
+}
+
+export function checkTurtlesAlives(turtlesPathes: string[]) {
+    return turtlesPathes.map(fName => ({
+        name: fName,
+        runtime: JSON.parse(fs.readFileSync(fName, {encoding: "UTF-8"}))
+    })).map(fstat => ({
+        ...fstat,
+        active: alive(fstat.runtime.pid)
+    }));
+}
+
+export function printTurtlesList(turtlesPathes: string[], option: {process?: boolean, info?: boolean}) {
+    return checkTurtlesAlives(turtlesPathes).forEach(t => {
+        const {name, runtime, active} = t;
+        const print: any[] = [name];
+        if (option.process) {
+            print.push(active
+                ? chalk.greenBright(`◆ON:${runtime.pid}◆`)
+                : chalk.redBright(`◇OFF:${runtime.pid}◇`)
+            );
+        }
+        if (option.info) {
+            print.push(runtime);
+        }
+        console.log(...print);
+    });
 }
 
 export function getTimeString(format: string): string {

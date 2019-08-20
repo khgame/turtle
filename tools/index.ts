@@ -14,7 +14,7 @@ cmdMaker
     .start(
         {
             version: pkgConf.version || process.env.npm_package_version,
-            cbFallback: () => ls.exec(process.cwd(), ),
+            cbFallback: () => ls.exec(process.cwd(), { process: true }),
         });
 
 // commander.version(pkgConf.version || process.env.npm_package_version || "0.0.1");

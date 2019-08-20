@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import {ICmd} from "easy-commander";
 import chalk from "chalk";
-import {alive} from "./utils";
+import {alive, checkTurtlesAlives, printTurtlesList} from "./utils";
 
 export const ls: ICmd = {
     desc: "ls <path>",
@@ -23,30 +23,9 @@ export const ls: ICmd = {
             path = undefined;
         }
         const paths = fs.readdirSync(path || ".");
-        const turtles = paths
-            .filter(p => p.startsWith(".") && p.endsWith(".turtle"))
-            .map(fName => ({
-                name: fName,
-                runtime: JSON.parse(fs.readFileSync(fName, {encoding: "UTF-8"}))
-            })).map(fstat => ({
-                ...fstat,
-                active: alive(fstat.runtime.pid)
-            }));
-        turtles.forEach(t => {
-            const {name, runtime, active} = t;
-            const print: any[] = [name];
-            if (cmd.process) {
-                print.push(active
-                    ? chalk.greenBright(`◆ON:${runtime.pid}◆`)
-                    : chalk.redBright(`◇OFF:${runtime.pid}◇`)
-                );
-            }
-            if (cmd.info) {
-                print.push(runtime);
-            }
+        const turtles = paths.filter(p => p.startsWith(".") && p.endsWith(".turtle"))
 
-            console.log(...print);
-        });
+        printTurtlesList(turtles, cmd);
     }
 };
 
