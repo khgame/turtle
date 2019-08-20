@@ -17,7 +17,7 @@ export const ls: ICmd = {
             input: false
         }
     },
-    exec: async (path: string, cmd: { info: string, process: string }) => {
+    exec: async (path: string, cmd: { info?: boolean, process?: boolean }) => {
         if (!cmd) {
             cmd = path as any;
             path = undefined;

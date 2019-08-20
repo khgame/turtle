@@ -836,10 +836,10 @@ duplexer3@^0.1.4:
   resolved "https://registry.npm.taobao.org/duplexer3/download/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
   integrity sha1-7gHdHKwO08vH/b6jfcCo8c4ALOI=
 
-easy-commander@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.npm.taobao.org/easy-commander/download/easy-commander-0.0.2.tgz?cache=0&sync_timestamp=1566319566789&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Feasy-commander%2Fdownload%2Feasy-commander-0.0.2.tgz#268d87e4a432f5d31d375b817adcbd0adbc92609"
-  integrity sha1-Jo2H5KQy9dMdN1uBety9CtvJJgk=
+easy-commander@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.npm.taobao.org/easy-commander/download/easy-commander-0.0.3.tgz?cache=0&sync_timestamp=1566323072148&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Feasy-commander%2Fdownload%2Feasy-commander-0.0.3.tgz#aed05e199c08860017fde8b1a4354a24e5b72dd9"
+  integrity sha1-rtBeGZwIhgAX/eixpDVKJOW3Ldk=
   dependencies:
     "@types/node" "^12.7.2"
     commander "^3.0.0"

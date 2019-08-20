@@ -7,7 +7,15 @@ import {stop} from "./stop";
 import {log} from "./log";
 import {pkgConf} from "./utils";
 
-cmdMaker.append({init, ls, restart, stop, log}).start({ version : pkgConf.version || process.env.npm_package_version});
+cmdMaker
+    .append({
+        init, ls, restart, stop, log
+    })
+    .start(
+        {
+            version: pkgConf.version || process.env.npm_package_version,
+            cbFallback: () => ls.exec(process.cwd(), ),
+        });
 
 // commander.version(pkgConf.version || process.env.npm_package_version || "0.0.1");
 //
