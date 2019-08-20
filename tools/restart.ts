@@ -27,12 +27,13 @@ export const restart: ICmd = {
     exec: async (name: string, cmd: { out?: string, timestamp?: string, follow?: boolean }) => {
         if (!cmd) { // if name are not exist, cmd will be move to the first argument's position
             const paths = fs.readdirSync(".");
-            const turtles = paths
-                .filter(p => p.startsWith(".") && p.endsWith(".turtle"));
+
+            const turtles = paths.filter(p => p.startsWith(".") && p.endsWith(".turtle"));
+
             console.error(`try to restart turtle process failed: name of turtle process must be given.
 These turtle process are detected in this directory:
-${printTurtlesList(turtles, {process: true})}
 `);
+            printTurtlesList(turtles, {process: true});
             return;
         }
 
