@@ -57,7 +57,7 @@ export function checkTurtlesAlives(turtlesPathes: string[]) {
     }));
 }
 
-export function printTurtlesList(turtlesPathes: string[], option: {process?: boolean, info?: boolean} = {}) {
+export function printTurtlesList(turtlesPathes: string[], option: { process?: boolean, info?: boolean } = {}) {
     return checkTurtlesAlives(turtlesPathes).forEach(t => {
         const {name, runtime, active} = t;
         const print: any[] = [name];
@@ -99,29 +99,9 @@ export function getTimeString(format: string): string {
 }
 
 export function printFileToStdout(path: string) {
-    // const stat = await promisify(fs.stat)(path);
-
     const log = fs.readFileSync(path, {encoding: "UTF-8"});
-
     process.stdout.write(log);
-
     return log;
-    // const stream = fs.createReadStream(path, {
-    //     start: 0,
-    //     encoding: "UTF-8"
-    // });
-    //
-    // let end = false;
-    // stream.on("data", (data) => {
-    //     process.stdout.write(data);
-    // });
-    //
-    // stream.on("end", () => {
-    //     end = true;
-    // });
-    //
-    // await forCondition(() => end);
-    // await forMs(100);
 }
 
 
@@ -173,6 +153,32 @@ export async function loadTemplate(url: string) {
     });
 
     return tplDir;
+}
+
+export function sizeNumberToHumanReadableString(value: number, padstart: boolean) {
+    const trillion = 1000000000000;
+    const billion = 1000000000;
+    const million = 1000000;
+    const thousand = 1000;
+    const abs = Math.abs(value || 0);
+    let symbol = "b";
+    if (abs >= trillion) {
+        symbol = "tb";
+        value = value / trillion;
+    } else if (abs < trillion && abs >= billion) {
+        // billion
+        symbol = "gb";
+        value = value / billion;
+    } else if (abs < billion && abs >= million) {
+        symbol = "mb";
+        value = value / million;
+    } else if (abs < million) {
+        symbol = "kb";
+        value = value / thousand;
+    }
+    let ret = value.toFixed(2);
+    ret = ret.padStart(6, " ");
+    return `${ret} ${symbol}`;
 }
 
 

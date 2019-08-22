@@ -1,8 +1,8 @@
 import {ConsoleHelper} from "kht";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import {ICmd} from "easy-commander";
 import chalk from "chalk";
-import {followFileToStdout, printFileToStdout} from "./utils";
+import {followFileToStdout, printFileToStdout, sizeNumberToHumanReadableString} from "./utils";
 
 export const log: ICmd = {
     desc: "log",
@@ -26,13 +26,20 @@ export const log: ICmd = {
         const paths = fs.readdirSync(path || ".");
         const turtleLogs = paths.filter(p => /.*.turtle.*.log/.test(p));
 
+        const logStatus = await Promise.all(turtleLogs.map(p => fs.stat(p)));
+
         if (turtleLogs.length === 0) {
             console.log(chalk.yellow(`no turtle logs are found.`));
         }
 
+
+
         console.log(
-            `turtle log files in current dir ${chalk.greenBright(process.cwd())}`
-            + turtleLogs.reduce((p, s, i) => p + `\n[${i}] ` + s, "")
+            `turtle log files in current dir ${chalk.greenBright(process.cwd())}\n`
+            + turtleLogs.reduce((p, s, i) => p + `\n[${
+                i.toString().padStart(turtleLogs.length.toString().length, " ")}]\t${
+                sizeNumberToHumanReadableString(logStatus[i].size, true)}\t${
+                s} `, "")
         );
 
         if (cmd.print || cmd.follow) {
