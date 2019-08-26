@@ -422,4 +422,15 @@ export class Turtle<IDrivers> {
 import {turtleVerbose} from "../core/utils/turtleVerbose";
 import chalk from "chalk";
 
+if (require) {
+    try {
+        /* tslint:disable */
+        var Promise = require("bluebird");
+        turtleVerbose(`GLOBAL EVENT`, "Promise: bluebird");
+        /* tslint:enable */
+    } catch (e) {
+        // ..
+    }
+}
+
 export const turtle = new Turtle<any>();
