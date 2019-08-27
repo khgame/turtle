@@ -216,11 +216,14 @@ cli.run();
 - By default, the log command will only show turtles' stdout files in the executing dir
 - You can using option `-p` to print a logfile for `-f` to follow a logfile.
   If these options are detected, a question will show up after the logFiles' list.
-  Hence you just need to select a log file to print or tail by their sequence printed.
+  Hence you just need to select a log file to print or tail by their `sequence` printed.
 - Options:
 
     |option|alias|need args|desc|
     |---|---|---|---|
     |--print|-p|false|print the stdout file|
     |--follow|-f|false|tail the stdout file|
+
+    > When sequence `-1` are specified will select the latest log file.
+    > Therefore, you can using pipe to print contents of the latest log file: `(echo -1) | turtle log -p`.
 
