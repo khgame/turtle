@@ -1,4 +1,4 @@
-import {genAssert, genLogger} from "../../utils";
+import {genAssert, genLogger, Continuous} from "../../utils";
 import {IWorker, WorkerRunningState} from "./interface";
 import {Logger} from "winston";
 import {forCondition, timeoutPromise} from "kht";
@@ -25,6 +25,7 @@ export abstract class Worker implements IWorker {
         }
         return this.__log = genLogger("worker:" + this.name);
     }
+
     private __log: Logger;
 
     public get assert(): CAssert {
@@ -33,6 +34,7 @@ export abstract class Worker implements IWorker {
         }
         return this.__assert = genAssert("worker:" + this.name);
     }
+
     private __assert: CAssert;
 
     constructor(public readonly name: string) {
@@ -70,8 +72,20 @@ export abstract class Worker implements IWorker {
         try {
             this.enabled = false;
             this.log.info(`- disable worker ${this.name} ✓`);
-            await timeoutPromise(turtle.conf.setting.worker_close_timeout_ms || 300000, forCondition(() => this.processRunning <= 0));
-            // todo: should timeout?
+
+            for (const indCW in this._continuousWorks) {
+                this._continuousWorks[indCW].cancel();
+            }
+            this.log.info(`- disable continuous works ${this.name} ✓`);
+
+            const workerCloseTimeout = turtle.conf.setting.worker_close_timeout_ms === undefined ? 30000 : turtle.conf.setting.worker_close_timeout_ms; // todo: should timeout?
+            /**  -1 means wail until, 0 means right now */
+            if (workerCloseTimeout < 0) {
+                await forCondition(() => this.processRunning <= 0);
+            } else if (workerCloseTimeout > 0) {
+                await timeoutPromise(workerCloseTimeout, forCondition(() => this.processRunning <= 0));
+            }
+
             this.log.info(`- all running process of worker ${this.name} are closed ✓`);
             this.log.info(`※※ worker ${this.name} exited ※※`);
             return true;
@@ -83,4 +97,29 @@ export abstract class Worker implements IWorker {
     }
 
     public abstract onStart(): Promise<boolean> ;
+
+    private _continuousWorks: Continuous[] = [];
+
+    createContinuousWork(cb: () => any, spanMS: number = 1000, log?: string): Continuous {
+        let round = 1;
+        this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
+        const taskHandler = async () => {
+            this.processRunning += 1;
+            try {
+                if (log) {
+                    this.log.info(`continuous work ${log} (span ${spanMS}) of ${this.name} executed, round ${round}`);
+                }
+                await Promise.resolve(cb);
+            } catch (e) {
+                this.log.warn(`continuous work ${log} (span ${spanMS}) of ${this.name} failed, round ${round} error: ${e}, ${e.stack}`);
+                throw e;
+            } finally {
+                this.processRunning -= 1;
+            }
+        };
+
+        const task: Continuous = Continuous.create(taskHandler, spanMS);
+        this._continuousWorks.push(task);
+        return task;
+    }
 }

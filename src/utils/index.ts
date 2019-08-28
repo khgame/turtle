@@ -5,3 +5,4 @@ export * from "./http";
 export * from "./memCache";
 export * from "./sendMail";
 
+export * from "./tasks/continuous";
