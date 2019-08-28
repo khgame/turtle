@@ -11,7 +11,7 @@ export class Continuous {
     }
 
     constructor(
-        public cb: TaskHandler,
+        public taskHandler: TaskHandler,
         public sleepMS: number
     ) {
         this.exec().then();
@@ -20,12 +20,12 @@ export class Continuous {
     async exec() {
         while (this.enabled) {
             await forMs(100 * Math.random());
-            await Promise.resolve(this.cb(new Date(), () => this.enabled));
+            await Promise.resolve(this.taskHandler(new Date(), () => this.enabled));
             await forMs(this.sleepMS);
         }
     }
 
-    static create(cb: TaskHandler, sleepMS: number) {
-        return new Continuous(cb, sleepMS);
+    static create(taskHandler: TaskHandler, sleepMS: number) {
+        return new Continuous(taskHandler, sleepMS);
     }
 }

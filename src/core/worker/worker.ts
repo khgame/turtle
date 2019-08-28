@@ -3,9 +3,11 @@ import {IWorker, WorkerRunningState} from "./interface";
 import {Logger} from "winston";
 import {forCondition, timeoutPromise} from "kht";
 import {turtle} from "../../turtle";
-import {CAssert, CError} from "@khgame/err";
+import {CAssert} from "@khgame/err";
 
-export abstract class Worker implements IWorker {
+export abstract class Worker implements IWorker { // todo: inject decorators
+
+    public static workerMap: { [key: string]: IWorker } = {}; // todo: check all worker status
 
     enabled: boolean = false;
 
@@ -16,8 +18,6 @@ export abstract class Worker implements IWorker {
     }
 
     runningState: WorkerRunningState = WorkerRunningState.NONE;
-
-    public static workerMap: { [key: string]: IWorker } = {};
 
     public get log(): Logger {
         if (!this.name) {
@@ -76,7 +76,7 @@ export abstract class Worker implements IWorker {
             for (const indCW in this._continuousWorks) {
                 this._continuousWorks[indCW].cancel();
             }
-            this.log.info(`- disable continuous works ${this.name} ✓`);
+            this.log.info(`- cancel all continuous works of worker ${this.name} ✓`);
 
             const workerCloseTimeout = turtle.conf.setting.worker_close_timeout_ms === undefined ? 30000 : turtle.conf.setting.worker_close_timeout_ms; // todo: should timeout?
             /**  -1 means wail until, 0 means right now */
@@ -100,16 +100,17 @@ export abstract class Worker implements IWorker {
 
     protected _continuousWorks: Continuous[] = [];
 
-    createContinuousWork(cb: () => any, spanMS: number = 1000, log?: string): Continuous {
+    createContinuousWork(cb: (date?: Date, isEnabled?: () => boolean) => any, spanMS: number = 1000, log?: string): Continuous {
         let round = 1;
         this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
-        const taskHandler = async () => {
+
+        const taskHandler = async (date: Date, isEnabled: () => boolean) => {
             this.processRunning += 1;
             try {
                 if (log) {
                     this.log.info(`continuous work ${log} (span ${spanMS}) of ${this.name} executed, round ${round}`);
                 }
-                await Promise.resolve(cb);
+                await Promise.resolve(cb(date, isEnabled));
             } catch (e) {
                 this.log.warn(`continuous work ${log} (span ${spanMS}) of ${this.name} failed, round ${round} error: ${e}, ${e.stack}`);
                 throw e;
