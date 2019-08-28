@@ -1,6 +1,5 @@
 import * as fs from "fs-extra";
 import * as Path from "path";
-
 import {IConf, ISetting} from "../conf/interface";
 import {EventEmitter} from "events";
 import {IApi, APIRunningState} from "../core/api";
@@ -425,11 +424,13 @@ import chalk from "chalk";
 if (require) {
     try {
         /* tslint:disable */
-        var Promise = require("bluebird");
+        var _p = require("bluebird");
         turtleVerbose(`GLOBAL EVENT`, "Promise: bluebird");
+        Promise = _p;
         /* tslint:enable */
     } catch (e) {
         // ..
+        // console.log("load bluebird failed", e)
     }
 }
 

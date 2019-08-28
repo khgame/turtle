@@ -98,7 +98,7 @@ export abstract class Worker implements IWorker {
 
     public abstract onStart(): Promise<boolean> ;
 
-    private _continuousWorks: Continuous[] = [];
+    protected _continuousWorks: Continuous[] = [];
 
     createContinuousWork(cb: () => any, spanMS: number = 1000, log?: string): Continuous {
         let round = 1;
