@@ -83,6 +83,7 @@
     "@types/mocha": "^5.2.6",
     "@types/mongodb": "^3.1.23",
     "@types/mongoose": "^5.3.26",
+    "@types/node-schedule": "^1.2.4",
     "@types/socket.io": "^2.1.2",
     "@types/socket.io-client": "^1.4.32",
     "chai": "^4.2.0",

@@ -4,6 +4,15 @@ import {Logger} from "winston";
 import {forCondition, timeoutPromise} from "kht";
 import {turtle} from "../../turtle";
 import {CAssert} from "@khgame/err";
+import {Job} from "node-schedule";
+
+let schedule: any;
+if (require) {
+    try {
+        schedule = require("node-schedule");
+    } catch (e) {
+    }
+}
 
 export type WorkerTaskCallback = ((date: Date, isEnabled: () => boolean) => any) | ((date: Date) => any) | (() => any);
 
@@ -77,10 +86,15 @@ export abstract class Worker implements IWorker { // todo: inject decorators
             this.enabled = false;
             this.log.info(`- disable worker ${this.name} ✓`);
 
-            for (const indCW in this._continuousWorks) {
-                this._continuousWorks[indCW].cancel();
+            for (const indCW in this._allWorks) {
+                this._allWorks[indCW].cancel();
             }
-            this.log.info(`- cancel all continuous works of worker ${this.name} ✓`);
+            this.log.info(`- cancel all continuous works of worker ${this.name} (${this._allJobs.length}) ✓`);
+
+            for (const indCW in this._allJobs) {
+                this._allJobs[indCW].cancel();
+            }
+            this.log.info(`- cancel all scheduler works of worker ${this.name} (${this._allJobs.length}) ✓`);
 
             const workerCloseTimeout = turtle.conf.setting.worker_close_timeout_ms === undefined ? 30000 : turtle.conf.setting.worker_close_timeout_ms; // todo: should timeout?
             /**  -1 means wail until, 0 means right now */
@@ -102,19 +116,31 @@ export abstract class Worker implements IWorker { // todo: inject decorators
 
     public abstract onStart(): Promise<boolean> ;
 
-    protected _continuousWorks: Continuous[] = [];
+    protected _allWorks: Array<Job | Continuous> = [];
+    protected _allJobs: Array<Job | Continuous> = [];
 
     public createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log?: string): Continuous {
         this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
         const taskHandler = this.packMethodToWork(cb, log);
         const task: Continuous = Continuous.create(taskHandler, spanMS);
-        this._continuousWorks.push(task);
+        this._allWorks.push(task);
         return task;
     }
 
-    protected packMethodToWork(cb: WorkerTaskCallback, log?: string) { // this.processRunning can only be used in the instance itself
+    public createContinuousScheduler(cron: string, cb: (date: Date) => any, spanMS: number = 1000, log?: string): Job {
+        if (!schedule) {
+            throw new Error("node-schedule package was not found installed. Try to install it: npm install node-schedule --save");
+        }
+        this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
+        const taskHandler = this.packMethodToWork(cb, log);
+        const task: Job = schedule.scheduleJob(cron, taskHandler);
+        this._allJobs.push(task);
+        return task;
+    }
+
+    protected packMethodToWork(cb: WorkerTaskCallback, log?: string): WorkerTaskCallback { // this.processRunning can only be used in the instance itself
         let round = 1;
-        return async (date: Date, isEnabled: () => boolean) => {
+        const handler = async (date: Date, isEnabled: () => boolean) => {
             this.processRunning += 1;
             try {
                 if (log) {
@@ -128,5 +154,6 @@ export abstract class Worker implements IWorker { // todo: inject decorators
                 this.processRunning -= 1;
             }
         };
+        return handler.bind(this);
     }
 }

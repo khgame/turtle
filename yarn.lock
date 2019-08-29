@@ -164,6 +164,13 @@
     "@types/mongodb" "*"
     "@types/node" "*"
 
+"@types/node-schedule@^1.2.4":
+  version "1.2.4"
+  resolved "https://registry.npm.taobao.org/@types/node-schedule/download/@types/node-schedule-1.2.4.tgz#2dce38dd7d87e77cd293113ac72f795fb9f6dfe0"
+  integrity sha1-Lc443X2H53zSkxE6xy95X7n23+A=
+  dependencies:
+    "@types/node" "*"
+
 "@types/node@*":
   version "11.13.9"
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-11.13.9.tgz#f80697caca7f7fb2526527a5c5a2743487f05ccc"
