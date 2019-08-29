@@ -152,6 +152,7 @@ export abstract class Worker implements IWorker { // todo: inject decorators
                 throw e;
             } finally {
                 this.processRunning -= 1;
+                round ++;
             }
         };
         return handler.bind(this);
