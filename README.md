@@ -225,5 +225,8 @@ cli.run();
     |--follow|-f|false|tail the stdout file|
 
     > When sequence `-1` are specified will select the latest log file.
+    >
     > Therefore, you can using pipe to print contents of the latest log file: `(echo -1) | turtle log -p`.
+    >
+    > And you can remove 0-size log with command `turtle log | grep "0.00 kb" | awk '{print substr($0, 8)}' | awk '{print $3}' | xargs -I {} rm {}`
 
