@@ -91,11 +91,6 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
             processName = runtime.start_cmd[0];
             args = runtime.start_cmd.slice(1);
         }
-
-        if (runtime.node_env) {
-            processName = `NODE_ENV=${runtime.node_env} ${processName}`;
-        }
-
         if (!processName) {
             console.error(chalk.red(
                 `failed: cannot extract the start info from the turtle file, please check your npm_lifecycle_script or start_cmd`
@@ -109,7 +104,8 @@ please try \`npm i --save @khgame/turtle\` or \`yarn add @khgame/turtle\` to ins
         console.log(chalk.grey("run:", processName, "args:", ...args));
         const child = spawn(processName, args, {
             detached: true,
-            stdio: ["ignore", out, err]
+            stdio: ["ignore", out, err],
+            env: { NODE_ENV: runtime.node_env }
         });
 
         if (!child) {
