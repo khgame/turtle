@@ -121,34 +121,34 @@ export abstract class Worker implements IWorker { // todo: inject decorators
 
     public createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log?: string): Continuous {
         this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
-        const taskHandler = this.packMethodToWork(cb, log);
+        const taskHandler = this.packMethodToWork("continuous", cb, log);
         const task: Continuous = Continuous.create(taskHandler, spanMS);
         this._allWorks.push(task);
         return task;
     }
 
-    public createContinuousScheduler(cron: string, cb: (date: Date) => any, spanMS: number = 1000, log?: string): Job {
+    public createSchedulerWork(cron: string, cb: WorkerTaskCallback, log?: string): Job {
         if (!schedule) {
             throw new Error("node-schedule package was not found installed. Try to install it: npm install node-schedule --save");
         }
-        this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
-        const taskHandler = this.packMethodToWork(cb, log);
+        this.assert.ok(cb, `create scheduler work of ${this.name} failed, callback must exist`);
+        const taskHandler = this.packMethodToWork("scheduler", cb, log);
         const task: Job = schedule.scheduleJob(cron, taskHandler);
         this._allJobs.push(task);
         return task;
     }
 
-    protected packMethodToWork(cb: WorkerTaskCallback, log?: string): WorkerTaskCallback { // this.processRunning can only be used in the instance itself
+    protected packMethodToWork(type: string, cb: WorkerTaskCallback, log?: string): WorkerTaskCallback { // this.processRunning can only be used in the instance itself
         let round = 1;
         const handler = async (date: Date, isEnabled: () => boolean) => {
             this.processRunning += 1;
             try {
                 if (log) {
-                    this.log.info(`continuous work ${log} of ${this.name} executed, round ${round}`);
+                    this.log.info(`worker: ${type} work ${log} of ${this.name} executed, round ${round}`);
                 }
                 await Promise.resolve(cb(date, isEnabled));
             } catch (e) {
-                this.log.warn(`continuous work ${log} of ${this.name} failed, round ${round} error: ${e}, ${e.stack}`);
+                this.log.warn(`worker: ${type} work ${log} of ${this.name} failed, round ${round} error: ${e}, ${e.stack}`);
                 throw e;
             } finally {
                 this.processRunning -= 1;
