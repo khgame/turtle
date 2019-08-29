@@ -5,6 +5,8 @@ import {forCondition, timeoutPromise} from "kht";
 import {turtle} from "../../turtle";
 import {CAssert} from "@khgame/err";
 
+export type WorkerTaskCallback = ((date: Date, isEnabled: () => boolean) => any) | ((date: Date) => any) | (() => any);
+
 export abstract class Worker implements IWorker { // todo: inject decorators
 
     public static workerMap: { [key: string]: IWorker } = {}; // todo: check all worker status
@@ -42,7 +44,11 @@ export abstract class Worker implements IWorker { // todo: inject decorators
             throw new Error(`worker ${name} are already exist.`);
         }
         Worker.workerMap[name] = this;
+
+        /** !!! child classes should set runningState to WorkerRunningState.RUNNING in their constructor */
     }
+
+
 
     public async start(): Promise<boolean> {
         this.log.info(`※※ Starting Process ※※`);
@@ -100,27 +106,30 @@ export abstract class Worker implements IWorker { // todo: inject decorators
 
     protected _continuousWorks: Continuous[] = [];
 
-    createContinuousWork(cb: (date?: Date, isEnabled?: () => boolean) => any, spanMS: number = 1000, log?: string): Continuous {
-        let round = 1;
+    createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log?: string): Continuous {
         this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
+        const taskHandler = this.packMethodToWork(cb, log);
+        const task: Continuous = Continuous.create(taskHandler, spanMS);
+        this._continuousWorks.push(task);
+        return task;
+    }
 
-        const taskHandler = async (date: Date, isEnabled: () => boolean) => {
+
+    protected packMethodToWork(cb: WorkerTaskCallback, log?: string) { // this.processRunning can only be used in the instance itself
+        let round = 1;
+        return async (date: Date, isEnabled: () => boolean) => {
             this.processRunning += 1;
             try {
                 if (log) {
-                    this.log.info(`continuous work ${log} (span ${spanMS}) of ${this.name} executed, round ${round}`);
+                    this.log.info(`continuous work ${log} of ${this.name} executed, round ${round}`);
                 }
                 await Promise.resolve(cb(date, isEnabled));
             } catch (e) {
-                this.log.warn(`continuous work ${log} (span ${spanMS}) of ${this.name} failed, round ${round} error: ${e}, ${e.stack}`);
+                this.log.warn(`continuous work ${log} of ${this.name} failed, round ${round} error: ${e}, ${e.stack}`);
                 throw e;
             } finally {
                 this.processRunning -= 1;
             }
-        };
-
-        const task: Continuous = Continuous.create(taskHandler, spanMS);
-        this._continuousWorks.push(task);
-        return task;
+        }
     }
 }
