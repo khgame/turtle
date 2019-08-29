@@ -260,7 +260,8 @@ export class Turtle<IDrivers> {
 
             switch (worker.runningState) {
                 case WorkerRunningState.NONE:
-                    throw new Error(`start worker ${i}:${worker.name} failed: it hasn't prepared.`);
+                    throw new Error(`start worker ${i}:${worker.name} failed: it hasn't prepared. 
+Child classes of worker should set runningState to WorkerRunningState.RUNNING in it's constructor, after initiated.`);
                 case WorkerRunningState.PREPARED:
                     try {
                         if (await worker.start()) {

@@ -48,8 +48,6 @@ export abstract class Worker implements IWorker { // todo: inject decorators
         /** !!! child classes should set runningState to WorkerRunningState.RUNNING in their constructor */
     }
 
-
-
     public async start(): Promise<boolean> {
         this.log.info(`※※ Starting Process ※※`);
         this.runningState = WorkerRunningState.STARTING;
@@ -106,14 +104,13 @@ export abstract class Worker implements IWorker { // todo: inject decorators
 
     protected _continuousWorks: Continuous[] = [];
 
-    createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log?: string): Continuous {
+    public createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log?: string): Continuous {
         this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
         const taskHandler = this.packMethodToWork(cb, log);
         const task: Continuous = Continuous.create(taskHandler, spanMS);
         this._continuousWorks.push(task);
         return task;
     }
-
 
     protected packMethodToWork(cb: WorkerTaskCallback, log?: string) { // this.processRunning can only be used in the instance itself
         let round = 1;
@@ -130,6 +127,6 @@ export abstract class Worker implements IWorker { // todo: inject decorators
             } finally {
                 this.processRunning -= 1;
             }
-        }
+        };
     }
 }
