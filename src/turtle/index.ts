@@ -3,7 +3,7 @@ import * as Path from "path";
 import {IConf, ISetting} from "../conf/interface";
 import {EventEmitter} from "events";
 import {IApi, APIRunningState} from "../core/api";
-import {CError, exitLog, genLogger, Logger} from "../utils";
+import {exitLog, genLogger, genMemCache, Logger} from "../utils";
 import {timeoutPromise} from "kht/lib";
 import * as getPort from "get-port";
 import {Runtime} from "./runtime";
@@ -29,6 +29,8 @@ export class Turtle<IDrivers> {
     // }
 
     public runtime: Runtime = new Runtime();
+
+    public readonly gCache: IMemCache = genMemCache();
 
     public conf: IConf;
 
@@ -421,6 +423,7 @@ Child classes of worker should set runningState to WorkerRunningState.RUNNING in
 
 import {turtleVerbose} from "../core/utils/turtleVerbose";
 import chalk from "chalk";
+import {IMemCache} from "../utils/memCache";
 
 if (require) {
     try {
