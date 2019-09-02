@@ -2,7 +2,7 @@ import * as fs from "fs";
 import {ICmd} from "easy-commander";
 import {forCondition, timeoutPromise} from "kht/lib";
 import chalk from "chalk";
-import {alive, getTurtleInfo} from "./utils";
+import {alive, getTurtleInfo, printTurtlesList} from "./utils";
 
 
 export const stop: ICmd = {
@@ -10,7 +10,12 @@ export const stop: ICmd = {
     args: {},
     exec: async (name: string, cmd: { info: string }) => {
         if (!cmd) {
-            console.error(chalk.red(`error: name of turtle process must be given.`));
+            const paths = fs.readdirSync(".");
+
+            const turtles = paths.filter(p => p.startsWith(".") && p.endsWith(".turtle"));
+            console.error(`try to restart turtle process failed: name of turtle process must be given.
+These turtle process are detected in this directory:`);
+            printTurtlesList(turtles, {process: true});
             return;
         }
 
