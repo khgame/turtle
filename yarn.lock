@@ -1346,10 +1346,10 @@ invert-kv@^2.0.0:
   resolved "https://registry.npm.taobao.org/invert-kv/download/invert-kv-2.0.0.tgz#7393f5afa59ec9ff5f67a27620d11c226e3eec02"
   integrity sha1-c5P1r6Weyf9fZ6J2INEcIm4+7AI=
 
-ip-public@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.npm.taobao.org/ip-public/download/ip-public-1.0.1.tgz?cache=0&sync_timestamp=1565432780946&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fip-public%2Fdownload%2Fip-public-1.0.1.tgz#68f716b028116230a7212cdf0be655b6aa1223b2"
-  integrity sha1-aPcWsCgRYjCnISzfC+ZVtqoSI7I=
+ip-public@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.npm.taobao.org/ip-public/download/ip-public-1.0.2.tgz#b727fbcda61a8ecc75fb95ada7615bbb66a00a37"
+  integrity sha1-tyf7zaYajsx1+5Wtp2Fbu2agCjc=
   dependencies:
     "@types/axios" "^0.14.0"
     axios "^0.19.0"

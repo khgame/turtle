@@ -108,7 +108,7 @@ export abstract class Worker implements IWorker { // todo: inject decorators
             this.log.info(`※※ worker ${this.name} exited ※※`);
             return true;
         } catch (e) {
-            this.log.error(`※※ shutdown worker ${this.name} failed ※※ ${e}`);
+            this.log.error(`※※ shutdown worker ${this.name} failed ※※ processRunning : ${this.processRunning}, ${e}`);
             this.runningState = WorkerRunningState.RUNNING;
             return false;
         }
