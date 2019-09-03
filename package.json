@@ -1,6 +1,6 @@
 {
   "name": "@khgame/turtle",
-  "version": "0.0.90",
+  "version": "0.0.92",
   "description": "An enterprise level javascript/typescript server framework.",
   "keywords": [
     "web",
@@ -59,7 +59,7 @@
     "fs-extra": "^8.1.0",
     "get-port": "^5.0.0",
     "glob": "^7.1.3",
-    "ip-public": "^1.0.2",
+    "ip-public": "^1.0.4",
     "kht": "^0.0.12",
     "md5": "^2.2.1",
     "node-cache": "^4.2.1",
