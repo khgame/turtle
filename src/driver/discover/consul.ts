@@ -331,7 +331,7 @@ export class DiscoverConsulDriver implements IDriverAdaptor<IConsulConf, any> {
     // @DiscoverConsulDriver.FieldExist
     async httpClient(serviceName: string) {
 
-        return await this.httpClientCache.getLoosingCache(
+        return await this.httpClientCache.getLoosingCache( // todo: can you do this ? how dose the copy?
             serviceName,
             async (name) => {
                 let ret;

@@ -322,8 +322,8 @@ Child classes of worker should set runningState to WorkerRunningState.RUNNING in
 
     public async startAll(api: IApi, workers?: IWorker[], cmdControllers?: Function[]) {
         await this.tryInitial(cmdControllers);
-        await this.startApi(api);
         await this.startWorkers(workers);
+        await this.startApi(api);
     }
 
 
