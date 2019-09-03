@@ -238,7 +238,12 @@ export class Turtle<IDrivers> {
         return this;
     }
 
-    protected async startWorkers(workers: IWorker[]): Promise<this> {
+    protected async startWorkers(workers: IWorker[],
+                                 options: {
+                                     shutdown_when_error?: boolean
+                                 } = {
+                                     shutdown_when_error: true
+                                 }): Promise<this> {
         if (!workers) {
             this.log.info(`there are no workers to start.`);
             return this;
@@ -315,8 +320,13 @@ Child classes of worker should set runningState to WorkerRunningState.RUNNING in
         }
         if (error.length > 0) {
             logs.push(error.reduce((p, n) => p + " " + n, "error:"));
+
         }
         turtleVerbose("WORKERS STARTED", ...logs);
+
+        if (options && options.shutdown_when_error && error && error.length > 0) {
+            await this.shutdown("worker_error");
+        }
         return this;
     }
 
@@ -412,7 +422,7 @@ Child classes of worker should set runningState to WorkerRunningState.RUNNING in
         }
         await driverFactory.triggerWorkerClose();
 
-        turtleVerbose(`WORKERS CLOSED`, ... closedWorkerNames);
+        turtleVerbose(`WORKERS CLOSED`, ...closedWorkerNames);
     }
 
     public async closeAll() {
