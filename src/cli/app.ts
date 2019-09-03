@@ -2,7 +2,7 @@ import * as commander from "commander";
 import * as Path from "path";
 import * as fs from "fs-extra";
 import {turtle} from "../turtle";
-import {IApi, IWorker} from "../core";
+import {IApi, IWorker, Worker} from "../core";
 import {IConf} from "../conf/interface";
 import {CommandsAPI} from "../turtle/commands";
 import {Client} from "@khgame/jsonrpc/lib";
@@ -16,7 +16,7 @@ export class CommandLineApp {
         public version: string,
         protected drivers: Array<string | Function>,
         protected api: () => IApi,
-        protected workers: Array<() => IWorker>,
+        protected workersGetter: Array<() => IWorker | Function>,
         protected defaultConf: IConf,
         protected cmdControllers?: Array<() => Function>
     ) {
@@ -104,7 +104,13 @@ export class CommandLineApp {
                 // logger.info(" => start all");
                 await turtle.startAll(
                     this.api(),
-                    this.workers ? this.workers.map(f => f()) : undefined,
+                    this.workersGetter ? this.workersGetter.map(f => {
+                        if (f.prototype instanceof Worker) {
+                            return new (f as any)();
+                        }else {
+                            return f();
+                        }
+                    }) : undefined,
                     this.cmdControllers
                 );
                 logger.info(`※※ Turtle started: (config: ${JSON.stringify(turtle.conf)}) ※※`);
