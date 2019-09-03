@@ -74,7 +74,7 @@ export abstract class Worker implements IWorker { // todo: inject decorators
         } catch (e) {
             this.log.error(`※※ Start Process Failed ※※ ${e}`);
             this.runningState = WorkerRunningState.PREPARED;
-            return false;
+            throw e;
         }
     }
 
