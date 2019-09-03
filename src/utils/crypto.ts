@@ -1,6 +1,6 @@
 import { Keccak } from "sha3";
-import * as md5 from "md5";
 import { ec } from "elliptic";
+import * as crypto from "crypto";
 
 function getKeccakStr(msg: string, size: 224 | 256 | 384 | 512 = 256, encoding: BufferEncoding = "hex"){
     const hash = new Keccak(size);
@@ -8,8 +8,9 @@ function getKeccakStr(msg: string, size: 224 | 256 | 384 | 512 = 256, encoding: 
     return hash.digest(encoding);
 }
 
-function getMd5(msg: string | Buffer | number[]) : string{
-    return md5(msg);
+function getMd5(msg: string | Buffer) : string{
+    const md5 = crypto.createHash("md5");
+    return md5.update(msg).digest("hex");
 }
 
 const ecInstance = new ec("secp256k1");
@@ -25,9 +26,19 @@ function ecdsaSign(privKeyHex: string, data: string) : boolean {
     return prvKey.sign(word).toDER("hex");
 }
 
+function dullSign(data: { [key: string]: any }, hash: string){
+    const keys: any[] = Object.keys(data).filter(s => s !== "sign").sort();
+    const signStr = keys.reduce((prev, k) =>
+        prev + (data[k] !== undefined ? `&${k}=${typeof data[k] === "object" ? JSON.stringify(data[k]) : data[k]}` : "")
+        , "").substr(1) + hash;
+    const dist = (signStr).toLowerCase();
+    return getMd5(dist);
+}
+
 export const Crypto = {
     getKeccakStr,
     getMd5,
     ecdsaValidate,
-    ecdsaSign
+    ecdsaSign,
+    dullSign
 };
