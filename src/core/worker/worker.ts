@@ -119,10 +119,19 @@ export abstract class Worker implements IWorker { // todo: inject decorators
     protected _allWorks: Array<Job | Continuous> = [];
     protected _allJobs: Array<Job | Continuous> = [];
 
-    public createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log?: string): Continuous {
+    public createContinuousWork(cb: WorkerTaskCallback, spanMS: number = 1000, log: string, errorCrush: boolean = true): Continuous {
         this.assert.ok(cb, `create continuous work (span ${spanMS}) of ${this.name} failed, callback must exist`);
         const taskHandler = this.packMethodToWork("continuous", cb, log);
-        const task: Continuous = Continuous.create(taskHandler, spanMS);
+        const task: Continuous = Continuous.create(
+            taskHandler,
+            spanMS,
+            errorCrush,
+            (error) => {
+                this.log.error(`uncaught error in continuous work ${log}: ${error}. ${error.stack}.`);
+            },
+            (enabled: boolean) => {
+                this.log.info(`continuous work ${log} exited when enabled : ${enabled}.`);
+            });
         this._allWorks.push(task);
         return task;
     }
@@ -152,7 +161,7 @@ export abstract class Worker implements IWorker { // todo: inject decorators
                 throw e;
             } finally {
                 this.processRunning -= 1;
-                round ++;
+                round++;
             }
         };
         return handler.bind(this);
