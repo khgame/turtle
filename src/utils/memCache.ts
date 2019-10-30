@@ -14,34 +14,41 @@ export interface IMemCache extends NodeCache {
     unlockMany(keys: string[]): boolean;
 
     getLoosingCache<TVal>(key: string, fnGetVal: (key: string) => Promise<TVal>, ttlS: number): Promise<TVal>;
+    expireLoosingCache(key: string): boolean;
+    removeLoosingCache(key: string): boolean;
+    rewriteLoosingCache<TVal>(key: string, val: TVal, ttlS: number): boolean;
 }
 
 export function genMemCache(options?: ICacheOptions): IMemCache {
-    const cache = new NodeCache(options);
+    // const cache =
 
-    const ret: any = cache;
+    const ret: any = new NodeCache(options);
+
+    function set(key: string, val: any, ttl: number = 0) {
+        return ttl > 0 ? ret.set(key, val, ttl) : ret.set(key, val);
+    }
 
     ret.lock = (key: string, ttl: number = 0) => {
-        if (cache.get(key) !== undefined) {
+        if (ret.get(key) !== undefined) {
             return false;
         }
-        return ttl > 0 ? cache.set(key, "", ttl) : cache.set(key, "");
+        return set(key, "", ttl);
     };
 
     ret.unlock = (key: string) => {
-        return cache.del(key) === 1;
+        return ret.del(key) === 1;
     };
 
     ret.getLoosingCache = async <TVal>(key: string, fnGetVal: (key: string) => Promise<TVal>, ttlS: number = 0): Promise<TVal> => { // todo: test this
         const enableKey = "__enable__" + key;
         const acquireKey = "__acquire__" + key;
         let value: TVal;
-        if (cache.get(enableKey) !== undefined || !ret.lock(acquireKey, 1)) { // 1 query per second
-            value = cache.get(key);
+        if (ret.get(enableKey) !== undefined || !ret.lock(acquireKey, 1)) { // 1 query per second
+            value = ret.get(key);
 
             for (let t = 50; value === undefined && t <= 250; t += 50) { // try wait up to 750 ms
                 await forMs(t);
-                value = cache.get(key);
+                value = ret.get(key);
             }
 
             if (value !== undefined) { // query directly when it's still failed
@@ -61,26 +68,44 @@ export function genMemCache(options?: ICacheOptions): IMemCache {
 
         const loosingWindowRate = options ? (options.loosingWindowRate && options.loosingWindowRate > 1 ? options.loosingWindowRate : 2) : 2;
         // update loosing cache
-        cache.set(key, value, ttlS * loosingWindowRate);
+
+        set(key, value, ttlS * loosingWindowRate);
         ret.lock(enableKey, ttlS);
         ret.unlock(acquireKey);
 
-        return cache.get(key);
+        return ret.get(key);
+    };
+
+    ret.expireLoosingCache = (key: string) => {
+        const enableKey = "__enable__" + key;
+        return ret.unlock(enableKey);
+    };
+
+    ret.removeLoosingCache = (key: string) => {
+        ret.expireLoosingCache(key);
+        return ret.del(key) === 1;
+    };
+
+    ret.rewriteLoosingCache = <TVal>(key: string, value: TVal, ttlS: number = 0) => { // this may be override by other process
+        const enableKey = "__enable__" + key;
+        const loosingWindowRate = options ? (options.loosingWindowRate && options.loosingWindowRate > 1 ? options.loosingWindowRate : 2) : 2;
+        set(key, value, ttlS * loosingWindowRate);
+        return set(enableKey, "", ttlS * loosingWindowRate);
     };
 
     ret.lockMany = (keys: string[], ttl: number) => {
         if (ttl <= 0) {
             throw new Error("ttl must be set when lock many");
         }
-        if (Object.keys(cache.mget(keys)).length > 0) {
+        if (Object.keys(ret.mget(keys)).length > 0) {
             return false;
         }
-        keys.forEach(key => cache.set(key, "", ttl));
+        keys.forEach(key => ret.set(key, "", ttl));
         return true;
     };
 
     ret.unlockMany = (keys: string[]) => {
-        keys.forEach(key => cache.del(key));
+        keys.forEach(key => ret.del(key));
         return true;
     };
 
