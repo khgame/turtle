@@ -15,6 +15,7 @@ export interface IMemCache extends NodeCache {
 
     getLoosingCache<TVal>(key: string, fnGetVal: (key: string) => Promise<TVal>, ttlS: number): Promise<TVal>;
     expireLoosingCache(key: string): boolean;
+    isLoosingCacheExpired(key: string): boolean;
     removeLoosingCache(key: string): boolean;
     rewriteLoosingCache<TVal>(key: string, val: TVal, ttlS: number): boolean;
 }
@@ -84,6 +85,11 @@ export function genMemCache(options?: ICacheOptions): IMemCache {
     ret.removeLoosingCache = (key: string) => {
         ret.expireLoosingCache(key);
         return ret.del(key) === 1;
+    };
+
+    ret.isLoosingCacheExpired = (key: string) => {
+        const enableKey = "__enable__" + key;
+        return (ret as IMemCache).get(enableKey) === undefined;
     };
 
     ret.rewriteLoosingCache = <TVal>(key: string, value: TVal, ttlS: number = 0) => { // this may be override by other process
